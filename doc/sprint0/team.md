@@ -1,1 +1,17 @@
+| Full Name |Section | Student ID | Email | Best Way to Contact | Discord Username
+|
+|-----------|--------|------------|-------|---------------------|------------------
+|
+| Abdulbasit Ali| E | 218631838 | aali02@my.yorku.ca | 437-237-2016 | 225basit
+|
+| | | | | |
+|
+| | | | | |
+|
+| | | | | |
+|
+| | | | | |
+|
+---
 
+Discord Server Invite: https://discord.gg/abChN7dmc2
