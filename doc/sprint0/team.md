@@ -10,7 +10,7 @@
 |
 | Hassan Dannyal | E | 218762997 | hassand1@my.yorku.ca | 647-447-0916 | spectraph_
 |
-| | | | | |
+| Ahmad Kanoun| E | 218627372 | akanoun@my.yorku.ca | 416-795-7059| ahmadbakesbread
 |
 ---
 
