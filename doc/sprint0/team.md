@@ -6,7 +6,7 @@
 |
 | Ryan Dezfuli| E | 218826859| d1135232@my.yorku.ca | 647-548-9734| ryandez
 |  
-| Chiaghame Allen | E | 216712739 | chiaghame4@gmail.com | 647-512-1996 | mazecruise
+| Chiaghame Allen | E | 216712739 | allenc85@my.yorku.ca| 647-512-1996 | mazecruise
 |
 | Hassan Dannyal | E | 218762997 | hassand1@my.yorku.ca | 647-447-0916 | spectraph_
 |
