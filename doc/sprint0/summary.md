@@ -6,7 +6,7 @@
 RideEase is a platform that will be potentially used by passengers who want a ride to a certain place and by drivers who are willing to provide the service of transportation. This platform will be used to connect these primary users for a transaction of the service. RideEase will use a three-tier architecture to ensure that the application will scale well and be reliable as well as user-friendly so that it may have many users using this platform.
 
 2. ### Key Users
-1. **Riders**: People who want a ride from one place to another in an affordable, secure, reliable way. These users may either not own a vehicle, not have a license, be on a budget, or who care about the environment and would prefer carpooling, etc., or may use it for any other reason.
+1. **Passengers**: People who want a ride from one place to another in an affordable, secure, reliable way. These users may either not own a vehicle, not have a license, be on a budget, or who care about the environment and would prefer carpooling, etc., or may use it for any other reason.
 2. **Drivers**: These are people who would like to connect with the other end users (passengers) to provide their driving service safely and securely, in addition to seeking flexible income opportunities.
 3. **Admins**: These will be team members in charge of overseeing the operations of an application for quality and support to users.
 
