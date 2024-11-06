@@ -1,5 +1,3 @@
-# Process.md
-
 ## Team Reflections and Organization
 
 In the initial phase of the RideEase project, our team maintained consistent communication and collaboration to meet our goals. We organized the team by dividing key responsibilities across members according to our skills, with each person contributing to various user stories and project components as needed. We primarily used Trello for tracking tasks and progress, Discord for discussions and collaborative sessions, and WhatsApp for quick updates and ongoing communication.
