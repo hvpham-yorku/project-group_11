@@ -10,7 +10,7 @@ RideEase is a ride-sharing application designed to connect passengers seeking tr
 - Scale efficiently to accommodate growing user numbers without compromising performance.
 
 ## Installation
-
+test
 ### Prerequisites
 Ensure that you have the following tools installed:
 - **Node.js**: for server-side operations and application logic.
