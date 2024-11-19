@@ -5,7 +5,7 @@ This team has agreed that a feature is considered "done" when:
 
 1. **Code is completed**:
    - Atleast one member from the team has reviewed the code after being typed and pushed to github.
-   - The code follows the Agile model software process.
+   - The code follows the Agile model software process
   
 2. **Bug Fixing**:
    - All known bugs identified during testing have been resolved which should not generate any compilation or logical error.
