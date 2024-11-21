@@ -31,7 +31,7 @@ import onboarding1 from "@/assets/images/ronboarding1.png";
 import onboarding2 from "@/assets/images/ronboarding2.png";
 import onboarding3 from "@/assets/images/ronboarding3.png";
 import signUpCar from "@/assets/images/signup-car.png";
-import splash from "@/assets/images/rsplash.png";
+import splash from "@/assets/images/splash.png";
 export const images = {
     onboarding1,
     onboarding2,

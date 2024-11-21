@@ -5,8 +5,16 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import { images } from '@/constants';
+import { Image, View, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo'
+import { tokenCache } from '@/lib/auth';
+
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
+
+
+
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,18 +32,29 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) {
-    return null;
+    return (
+      <View className="flex-1">
+        <Text>RideEase</Text>
+      </View>
+    );
   }
 
+  if (!publishableKey) {
+    throw new Error(
+      'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
+    )
+  }
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ClerkProvider publishableKey={publishableKey}
+    tokenCache={tokenCache}>
+    <ClerkLoaded>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="(root)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      </ClerkLoaded>
+      </ClerkProvider>
   );
 }
