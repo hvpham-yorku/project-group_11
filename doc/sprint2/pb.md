@@ -3,7 +3,7 @@
 ### User Stories
 
 1. **User Story**: As a **passenger**, I want to create an account and provide my information so that I can use the app’s services.
-   - **Criteria of Satisfaction**: Account creation form collects phone number, address, email, and credit card information. Confirmation message received upon successful signup.
+   - **Criteria of Satisfaction**: Account creation form collects phone number, address, email, and credit card information. Confirmation message received upon successful signup. 
 
 2. **User Story**: As a **driver**, I want to create an account and provide my necessary documents so that I can use the app’s services to find passengers.
    - **Criteria of Satisfaction**: Account creation requires driver's license, work eligibility, car insurance, SIN, and bank details. Confirmation message received after successful signup.
