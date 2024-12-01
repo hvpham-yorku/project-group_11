@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, func, ForeignKey, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from geoalchemy2 import Geography  
 
 Base = declarative_base()
 
@@ -45,8 +46,12 @@ class RideRequests(Base):
 
     request_id = Column(Integer, primary_key=True, autoincrement=True)
     passenger_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
-    pickup_location = Column(String, nullable=False)  # Store as POINT(lat lng)
-    dropoff_location = Column(String, nullable=False)     # Store as POINT(lat lng)
+    driver_id = Column(Integer, ForeignKey('Users.user_id', ondelete='SET NULL'))
+    pickup_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
+    dropoff_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     status = Column(String, default="pending", nullable=False)
     created_at = Column(DateTime, default=func.now())  # Ensure default timestamp
     
+    # Relationships (optional, for ease of querying)
+    passenger = relationship('User', foreign_keys=[passenger_id])
+    driver = relationship('User', foreign_keys=[driver_id])

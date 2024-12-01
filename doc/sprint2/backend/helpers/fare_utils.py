@@ -88,15 +88,37 @@ def reverse_geocode(lat, lng):
         return "Unknown location"
     except Exception as e:
         raise ValueError(f"Error fetching address: {e}")
+    
+
+def parse_wkt_point(wkt_point):
+    """
+    Parse a WKT point string and return coordinates in 'latitude,longitude' format.
+    
+    Args:
+        wkt_point (str): WKT point string like 'POINT(longitude latitude)'
+        
+    Returns:
+        str: Coordinates in 'latitude,longitude' format.
+    """
+    try:
+        # Ensure the string starts with 'POINT(' and ends with ')'
+        if not wkt_point.startswith('POINT(') or not wkt_point.endswith(')'):
+            raise ValueError("Invalid WKT POINT format")
+        
+        # Extract the coordinates part and split into longitude and latitude
+        coords = wkt_point[6:-1].strip().split()
+        if len(coords) != 2:
+            raise ValueError("WKT POINT does not contain valid coordinates")
+        
+        longitude, latitude = coords
+        return f"{latitude},{longitude}"
+    except Exception as e:
+        raise ValueError(f"Error parsing WKT point: {e}")
 
 if __name__ == "__main__":
-    latitude = 37.7749  # Latitude of San Francisco, CA
-    longitude = -122.4194  # Longitude of San Francisco, CA
+    origin = "37.7749,-122.4194"  # San Francisco, CA
+    destination = "34.0522,-118.2437"  # Los Angeles, CA
+    
+    distance, duration = get_distance_and_duration(origin, destination)
 
-
-    try:
-        location = reverse_geocode(latitude, longitude)
-        print(location)
-    except ValueError as e:
-        print(f"Error: {e}")
-
+    print(distance, duration)

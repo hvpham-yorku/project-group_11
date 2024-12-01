@@ -5,13 +5,17 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 from flask import Blueprint, Flask, request, jsonify
 from firebase_admin import auth
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text
+from sqlalchemy import text, func
 from backend.models.models import User, DriverDetails, RideRequests
 from backend.db.database_setup import db
 from backend.services.firebase_setup import initialize_firebase
-from backend.helpers.fare_utils import get_distance_and_duration, calculate_fare, reverse_geocode
+from backend.helpers.fare_utils import get_distance_and_duration, calculate_fare, reverse_geocode, parse_wkt_point
 import requests
 from dotenv import load_dotenv
+import logging
+from datetime import datetime, timedelta
+
+
 
 
 app = Flask(__name__)
@@ -27,6 +31,10 @@ ride_bp = Blueprint('ride', __name__)
 
 FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
 FIREBASE_AUTH_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 # Access session and Base
 session = db.SessionLocal()
@@ -96,7 +104,6 @@ def set_availability(driver_id):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-
 @ride_bp.route('/create-request', methods=['POST'])
 def create_ride_request():
     """Allow a passenger to create a ride request."""
@@ -117,6 +124,13 @@ def create_ride_request():
             if not passenger:
                 return jsonify({"error": "Invalid passenger ID or user is not a passenger"}), 404
 
+            # Check for existing active ride request
+            active_request = session.query(RideRequests).filter_by(passenger_id=passenger_id).filter(
+                RideRequests.status.in_(['pending', 'in progress'])
+            ).first()
+            if active_request:
+                return jsonify({"error": "You already have an active ride request"}), 400
+
             # Parse pickup and destination coordinates
             try:
                 pickup_lat, pickup_lng = map(float, pickup_location.split(","))
@@ -127,8 +141,8 @@ def create_ride_request():
             # Create and save ride request
             ride_request = RideRequests(
                 passenger_id=passenger_id,
-                pickup_location=f"POINT({pickup_lat} {pickup_lng})",
-                dropoff_location=f"POINT({dropoff_lat} {dropoff_lng})",
+                pickup_location=f"SRID=4326;POINT({pickup_lng} {pickup_lat})",  # Include SRID for geography
+                dropoff_location=f"SRID=4326;POINT({dropoff_lng} {dropoff_lat})",  # Include SRID for geography
                 status='pending'
             )
             session.add(ride_request)
@@ -193,6 +207,205 @@ def view_requests():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+@ride_bp.route('/accept-request', methods=['POST'])
+def accept_ride_request():
+    """Allow a driver to accept a ride request."""
+    with db.SessionLocal() as session:
+        try:
+            # Parse request data
+            data = request.json
+            driver_id = data.get("driver_id")
+            request_id = data.get("request_id")
+
+            # Validate required fields
+            if not all([driver_id, request_id]):
+                return jsonify({"error": "Missing driver_id or request_id"}), 400
+
+            # Validate driver exists and is online
+            driver = session.query(User).filter_by(user_id=driver_id, user_type="driver", availability=True).first()
+            if not driver:
+                return jsonify({"error": "Driver not found or not available"}), 404
+
+            # Check if the driver is already handling another ride
+            active_ride = session.query(RideRequests).filter_by(driver_id=driver_id, status="matched").first()
+            if active_ride:
+                return jsonify({"error": "Driver is already handling another ride"}), 400
+
+            # Validate ride request exists and is pending
+            ride_request = session.query(RideRequests).filter_by(request_id=request_id, status="pending").first()
+            if not ride_request:
+                return jsonify({"error": "Ride request not found or not available"}), 404
+
+            # Assign the driver and update the request status
+            ride_request.driver_id = driver_id
+            ride_request.status = "matched"
+            session.commit()
+
+            # Retrieve updated ride request details
+            updated_request = session.query(RideRequests).filter_by(request_id=request_id).first()
+
+            if not updated_request:
+                return jsonify({"error": "Unable to retrieve updated ride request details"}), 500
+
+            # Manually convert geography fields to text (latitude, longitude format)
+            pickup_location = session.scalar(
+                text(f"SELECT ST_AsText(pickup_location) FROM \"RideRequests\" WHERE request_id = {request_id}")
+            )
+            dropoff_location = session.scalar(
+                text(f"SELECT ST_AsText(dropoff_location) FROM \"RideRequests\" WHERE request_id = {request_id}")
+            )
+
+            return jsonify({
+                "message": "Ride request accepted successfully!",
+                "request_id": updated_request.request_id,
+                "passenger_id": updated_request.passenger_id,
+                "pickup_location": pickup_location,
+                "dropoff_location": dropoff_location,
+                "status": updated_request.status
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+@ride_bp.route('/pickup-passenger', methods=['POST'])
+def pickup_passenger():
+    """Allow a driver to mark the passenger as picked up."""
+    with db.SessionLocal() as session:
+        try:
+            # Parse request data
+            data = request.json
+            driver_id = data.get("driver_id")
+            request_id = data.get("request_id")
+
+            # Validate required fields
+            if not all([driver_id, request_id]):
+                return jsonify({"error": "Missing driver_id or request_id"}), 400
+
+            # Validate ride request exists and is assigned to the driver
+            ride_request = session.query(RideRequests).filter_by(
+                request_id=request_id, driver_id=driver_id, status="matched"
+            ).first()
+            if not ride_request:
+                return jsonify({"error": "Ride request not found or not assigned to the driver"}), 404
+
+            # Update the ride request status
+            ride_request.status = "in progress"
+            session.commit()
+
+            return jsonify({"message": "Passenger picked up successfully!", "request_id": request_id}), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+@ride_bp.route('/end-ride', methods=['POST'])
+def end_ride():
+    """Allow a driver to mark the ride as completed."""
+    with db.SessionLocal() as session:
+        try:
+            # Parse request data
+            data = request.json
+            driver_id = data.get("driver_id")
+            request_id = data.get("request_id")
+
+            # Validate required fields
+            if not all([driver_id, request_id]):
+                return jsonify({"error": "Missing driver_id or request_id"}), 400
+
+            # Validate ride request exists and is assigned to the driver
+            ride_request = session.query(RideRequests).filter_by(
+                request_id=request_id, driver_id=driver_id, status="in progress"
+            ).first()
+            if not ride_request:
+                return jsonify({"error": "Ride request not found or not in progress"}), 404
+
+            # Update the ride request status
+            ride_request.status = "completed"
+            session.commit()
+
+            return jsonify({"message": "Ride completed successfully!", "request_id": request_id}), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+@ride_bp.route('/get-driver-eta', methods=['POST'])
+def get_driver_eta():
+    """Provide the estimated time of arrival (ETA) of the driver to the passenger."""
+    with db.SessionLocal() as session:
+        try:
+            # Parse request data
+            data = request.json
+            request_id = data.get("request_id")
+            
+            # Validate required fields
+            if not request_id:
+                return jsonify({"error": "Missing request_id"}), 400
+            logger.debug(f"Received request for ETA with request_id: {request_id}")
+            
+            # Validate ride request exists and is either matched or in progress
+            ride_request = session.query(
+                RideRequests.request_id,
+                func.ST_AsText(RideRequests.pickup_location).label("pickup_location"),
+                func.ST_AsText(RideRequests.dropoff_location).label("dropoff_location"),
+                RideRequests.driver_id,
+                RideRequests.created_at  # Timestamp when the ride was created/accepted
+            ).filter(
+                RideRequests.request_id == request_id,
+                RideRequests.status.in_(["matched", "in progress"])
+            ).first()
+            
+            if not ride_request:
+                logger.debug(f"Ride request with ID {request_id} not found or not assigned to a driver.")
+                return jsonify({"error": "Ride request not found or driver not assigned"}), 404
+            
+            # Retrieve and validate coordinates
+            driver_coordinates = ride_request.pickup_location
+            passenger_coordinates = ride_request.dropoff_location
+            
+            if not driver_coordinates or not passenger_coordinates:
+                logger.error(f"Failed to retrieve valid coordinates for request ID {request_id}.")
+                return jsonify({"error": "Invalid location data"}), 500
+
+            # Convert WKT to LatLng
+            try:
+                driver_coordinates = driver_coordinates.replace("POINT(", "").replace(")", "").replace(" ", ",")
+                passenger_coordinates = passenger_coordinates.replace("POINT(", "").replace(")", "").replace(" ", ",")
+                logger.debug(f"Driver Coordinates: {driver_coordinates}")
+                logger.debug(f"Passenger Coordinates: {passenger_coordinates}")
+            except Exception as coord_error:
+                logger.error(f"Error processing WKT coordinates: {coord_error}")
+                return jsonify({"error": "Failed to process location data"}), 500
+            
+            # Use Google Maps API to calculate distance and ETA
+            try:
+                distance, duration = get_distance_and_duration(driver_coordinates, passenger_coordinates)
+                logger.debug(f"Distance: {distance} meters, Duration: {duration} seconds")
+            except Exception as api_error:
+                logger.error(f"Failed to calculate ETA: {api_error}")
+                return jsonify({"error": f"Failed to calculate ETA: {api_error}"}), 500
+            
+            # Calculate exact arrival time
+            try:
+                acceptance_time = ride_request.created_at  # Timestamp when the request was accepted
+                estimated_arrival_time = acceptance_time + timedelta(seconds=duration)
+                estimated_arrival_time_str = estimated_arrival_time.strftime("%Y-%m-%d %H:%M:%S")
+                logger.debug(f"Exact Arrival Time: {estimated_arrival_time_str}")
+            except Exception as time_error:
+                logger.error(f"Error calculating exact arrival time: {time_error}")
+                return jsonify({"error": "Failed to calculate exact arrival time"}), 500
+
+            return jsonify({
+                "message": "ETA calculated successfully!",
+                "driver_id": ride_request.driver_id,
+                "request_id": request_id,
+                "pickup_location": passenger_coordinates,
+                "distance_km": round(distance / 1000, 2),
+                "eta_minutes": round(duration / 60, 2),
+                "estimated_arrival_time": estimated_arrival_time_str  # Include exact arrival time
+            }), 200
+        
+        except Exception as general_error:
+            logger.error(f"Unhandled error occurred: {str(general_error)}")
+            return jsonify({"error": str(general_error)}), 500
 
 # Register the Blueprint
 app.register_blueprint(ride_bp, url_prefix='/ride')
