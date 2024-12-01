@@ -6,13 +6,14 @@ from flask import Blueprint, Flask, request, jsonify
 from firebase_admin import auth
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text, func
-from backend.models.models import User, DriverDetails, RideRequests
+from backend.models.models import User, DriverDetails, RideRequests, BankAccount, Payment
 from backend.db.database_setup import db
 from backend.services.firebase_setup import initialize_firebase
 from backend.helpers.fare_utils import get_distance_and_duration, calculate_fare, reverse_geocode, parse_wkt_point
 import requests
 from dotenv import load_dotenv
 import logging
+from decimal import Decimal  # Import Decimal for type conversion
 from datetime import datetime, timedelta
 
 
@@ -106,7 +107,7 @@ def set_availability(driver_id):
 
 @ride_bp.route('/create-request', methods=['POST'])
 def create_ride_request():
-    """Allow a passenger to create a ride request."""
+    """Allow a passenger to create a ride request with fare validation."""
     with db.SessionLocal() as session:
         try:
             # Parse request data
@@ -124,12 +125,10 @@ def create_ride_request():
             if not passenger:
                 return jsonify({"error": "Invalid passenger ID or user is not a passenger"}), 404
 
-            # Check for existing active ride request
-            active_request = session.query(RideRequests).filter_by(passenger_id=passenger_id).filter(
-                RideRequests.status.in_(['pending', 'in progress'])
-            ).first()
-            if active_request:
-                return jsonify({"error": "You already have an active ride request"}), 400
+            # Validate passenger's bank account and balance
+            passenger_account = session.query(BankAccount).filter_by(user_id=passenger_id).first()
+            if not passenger_account:
+                return jsonify({"error": "Passenger's bank account not found"}), 404
 
             # Parse pickup and destination coordinates
             try:
@@ -138,19 +137,35 @@ def create_ride_request():
             except ValueError:
                 return jsonify({"error": "Invalid coordinate format"}), 400
 
+            # Calculate distance, duration, and fare
+            origin_coords = f"{pickup_lat},{pickup_lng}"
+            destination_coords = f"{dropoff_lat},{dropoff_lng}"
+            distance, duration = get_distance_and_duration(origin_coords, destination_coords)
+            fare = calculate_fare(distance, duration)
+
+            # Check if passenger has sufficient balance (no deduction yet)
+            if passenger_account.balance < Decimal(fare):  # Convert fare to Decimal for comparison
+                return jsonify({"error": "Insufficient funds to request this ride"}), 400
+
             # Create and save ride request
             ride_request = RideRequests(
                 passenger_id=passenger_id,
-                pickup_location=f"SRID=4326;POINT({pickup_lng} {pickup_lat})",  # Include SRID for geography
-                dropoff_location=f"SRID=4326;POINT({dropoff_lng} {dropoff_lat})",  # Include SRID for geography
-                status='pending'
+                pickup_location=f"SRID=4326;POINT({pickup_lng} {pickup_lat})",
+                dropoff_location=f"SRID=4326;POINT({dropoff_lng} {dropoff_lat})",
+                status='pending',
+                fare=fare  # Store the fare
             )
             session.add(ride_request)
             session.commit()
 
-            return jsonify({"message": "Ride request created successfully!", "request_id": ride_request.request_id}), 201
+            return jsonify({
+                "message": "Ride request created successfully!",
+                "request_id": ride_request.request_id,
+                "fare": round(fare, 2)
+            }), 201
 
         except Exception as e:
+            session.rollback()
             return jsonify({"error": str(e)}), 500
         
 
@@ -177,7 +192,7 @@ def view_requests():
             # Query for nearby requests
             query = text("""
                 SELECT r.request_id, r.passenger_id, ST_AsText(r.pickup_location) AS pickup_location,
-                    ST_AsText(r.dropoff_location) AS dropoff_location, r.status, u.name AS passenger_name
+                    ST_AsText(r.dropoff_location) AS dropoff_location, r.status, r.fare, u.name AS passenger_name
                 FROM "RideRequests" r
                 JOIN "Users" u ON r.passenger_id = u.user_id
                 WHERE r.status = 'pending'
@@ -193,13 +208,28 @@ def view_requests():
             # Format the response
             ride_requests = []
             for row in results:
+                pickup_coords = parse_wkt_point(row.pickup_location)
+                dropoff_coords = parse_wkt_point(row.dropoff_location)
+                
+                # Use reverse_geocode to get addresses
+                try:
+                    pickup_address = reverse_geocode(*pickup_coords.split(","))
+                except Exception as e:
+                    pickup_address = "Unable to fetch address"
+
+                try:
+                    dropoff_address = reverse_geocode(*dropoff_coords.split(","))
+                except Exception as e:
+                    dropoff_address = "Unable to fetch address"
+
                 ride_requests.append({
                     "request_id": row.request_id,
                     "passenger_id": row.passenger_id,
-                    "pickup_location": row.pickup_location,
-                    "dropoff_location": row.dropoff_location,
-                    "status": row.status,
-                    "passenger_name": row.passenger_name
+                    "passenger_name": row.passenger_name,
+                    "pickup_location": pickup_address,
+                    "dropoff_location": dropoff_address,
+                    "fare": row.fare,
+                    "status": row.status
                 })
 
             return jsonify({"ride_requests": ride_requests}), 200
@@ -209,7 +239,7 @@ def view_requests():
 
 @ride_bp.route('/accept-request', methods=['POST'])
 def accept_ride_request():
-    """Allow a driver to accept a ride request."""
+    """Allow a driver to accept a ride request and expose passenger contact details."""
     with db.SessionLocal() as session:
         try:
             # Parse request data
@@ -236,9 +266,31 @@ def accept_ride_request():
             if not ride_request:
                 return jsonify({"error": "Ride request not found or not available"}), 404
 
+            # Fetch the passenger
+            passenger = session.query(User).filter_by(user_id=ride_request.passenger_id).first()
+            if not passenger:
+                return jsonify({"error": "Passenger not found"}), 404
+
             # Assign the driver and update the request status
             ride_request.driver_id = driver_id
             ride_request.status = "matched"
+            session.commit()
+
+            # Retrieve passenger's bank account
+            passenger_account = session.query(BankAccount).filter_by(user_id=ride_request.passenger_id).first()
+            if not passenger_account:
+                return jsonify({"error": "Passenger's bank account not found"}), 404
+
+            # Create a pending payment for the ride
+            payment = Payment(
+                bank_account_id=passenger_account.account_id,  # Assign the bank account ID
+                user_id=ride_request.passenger_id,  # Passenger's user_id
+                ride_id=request_id,
+                amount=ride_request.fare,  # Fare amount from the ride request
+                currency="USD",  # Default currency
+                payment_status="pending"  # Mark payment as pending
+            )
+            session.add(payment)
             session.commit()
 
             # Retrieve updated ride request details
@@ -255,21 +307,26 @@ def accept_ride_request():
                 text(f"SELECT ST_AsText(dropoff_location) FROM \"RideRequests\" WHERE request_id = {request_id}")
             )
 
+            # Return response including passenger's phone number
             return jsonify({
                 "message": "Ride request accepted successfully!",
                 "request_id": updated_request.request_id,
                 "passenger_id": updated_request.passenger_id,
+                "passenger_name": passenger.name,  # Add passenger's name
+                "passenger_phone_number": passenger.phone_number,  # Add passenger's phone number
                 "pickup_location": pickup_location,
                 "dropoff_location": dropoff_location,
-                "status": updated_request.status
+                "status": updated_request.status,
+                "payment_status": "pending"
             }), 200
 
         except Exception as e:
+            session.rollback()
             return jsonify({"error": str(e)}), 500
 
 @ride_bp.route('/pickup-passenger', methods=['POST'])
 def pickup_passenger():
-    """Allow a driver to mark the passenger as picked up."""
+    """Allow a driver to mark the passenger as picked up and deduct fare from passenger's account."""
     with db.SessionLocal() as session:
         try:
             # Parse request data
@@ -288,18 +345,33 @@ def pickup_passenger():
             if not ride_request:
                 return jsonify({"error": "Ride request not found or not assigned to the driver"}), 404
 
+            # Validate passenger's account and balance
+            passenger_account = session.query(BankAccount).filter_by(user_id=ride_request.passenger_id).first()
+            if not passenger_account or passenger_account.balance < Decimal(ride_request.fare):
+                return jsonify({"error": "Insufficient funds in passenger's account"}), 400
+
+            # Deduct fare from passenger's balance
+            passenger_account.balance -= Decimal(ride_request.fare)
+            session.commit()
+
             # Update the ride request status
             ride_request.status = "in progress"
             session.commit()
 
-            return jsonify({"message": "Passenger picked up successfully!", "request_id": request_id}), 200
+            return jsonify({
+                "message": "Passenger picked up successfully!",
+                "request_id": request_id,
+                "fare_deducted": float(ride_request.fare),
+                "passenger_balance": float(passenger_account.balance)
+            }), 200
 
         except Exception as e:
+            session.rollback()
             return jsonify({"error": str(e)}), 500
 
 @ride_bp.route('/end-ride', methods=['POST'])
 def end_ride():
-    """Allow a driver to mark the ride as completed."""
+    """Allow a driver to mark the ride as completed and transfer fare to driver's account."""
     with db.SessionLocal() as session:
         try:
             # Parse request data
@@ -311,20 +383,41 @@ def end_ride():
             if not all([driver_id, request_id]):
                 return jsonify({"error": "Missing driver_id or request_id"}), 400
 
-            # Validate ride request exists and is assigned to the driver
+            # Fetch the ride request
             ride_request = session.query(RideRequests).filter_by(
                 request_id=request_id, driver_id=driver_id, status="in progress"
             ).first()
             if not ride_request:
                 return jsonify({"error": "Ride request not found or not in progress"}), 404
 
-            # Update the ride request status
+            # Fetch the pending payment
+            payment = session.query(Payment).filter_by(ride_id=request_id, payment_status="pending").first()
+            if not payment:
+                return jsonify({"error": "No pending payment found for this ride"}), 404
+
+            # Fetch the driver's bank account
+            driver_account = session.query(BankAccount).filter_by(user_id=driver_id).first()
+            if not driver_account:
+                return jsonify({"error": "Driver's bank account not found"}), 404
+
+            # Transfer fare to driver's account
+            driver_account.balance += payment.amount
+
+            # Update payment status to "completed"
+            payment.payment_status = "completed"
+
+            # Update ride request status
             ride_request.status = "completed"
             session.commit()
 
-            return jsonify({"message": "Ride completed successfully!", "request_id": request_id}), 200
+            return jsonify({
+                "message": "Ride completed successfully!",
+                "fare_transferred": float(payment.amount),
+                "request_id": ride_request.request_id
+            }), 200
 
         except Exception as e:
+            session.rollback()
             return jsonify({"error": str(e)}), 500
         
 @ride_bp.route('/get-driver-eta', methods=['POST'])
@@ -406,6 +499,41 @@ def get_driver_eta():
         except Exception as general_error:
             logger.error(f"Unhandled error occurred: {str(general_error)}")
             return jsonify({"error": str(general_error)}), 500
+        
+
+@ride_bp.route("/driver-payment-history/<int:driver_id>", methods=["GET"])
+def driver_payment_history(driver_id):
+    """Retrieve payment history for a driver."""
+    try:
+        # Check if the driver exists and is valid
+        driver = session.query(User).filter_by(user_id=driver_id, user_type="driver").first()
+        if not driver:
+            return jsonify({"error": "Driver not found or invalid driver ID"}), 404
+
+        # Query completed rides for the driver
+        payments = (
+            session.query(Payment)
+            .join(RideRequests, Payment.ride_id == RideRequests.request_id)
+            .filter(RideRequests.driver_id == driver_id, Payment.payment_status == "completed")
+            .all()
+        )
+
+        # Format response
+        payment_history = [
+            {
+                "ride_id": payment.ride_id,
+                "amount": float(payment.amount),
+                "payment_status": payment.payment_status,
+                "date": payment.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            for payment in payments
+        ]
+
+        return jsonify({"payment_history": payment_history}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # Register the Blueprint
 app.register_blueprint(ride_bp, url_prefix='/ride')

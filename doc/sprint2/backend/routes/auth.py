@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 from flask import Flask, Blueprint, request, jsonify
 from firebase_admin import auth
 from sqlalchemy.exc import IntegrityError
-from backend.models.models import User, DriverDetails
+from backend.models.models import User, DriverDetails, BankAccount
 from backend.db.database_setup import db
 from backend.services.firebase_setup import initialize_firebase
 import requests
@@ -19,7 +19,7 @@ app = Flask(__name__)
 initialize_firebase()
 
 # Initialize Blueprint
-ride_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__)
 
 
 # Load environment variables and set up Firebase authentication URL
@@ -31,7 +31,7 @@ FIREBASE_AUTH_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInW
 session = db.SessionLocal()
 Base = db.Base
 
-@app.route('/signup', methods=['POST'])
+@auth_bp.route('/signup', methods=['POST'])
 def signup_user():
     """Handle user registration."""
     session = db.SessionLocal()
@@ -44,9 +44,18 @@ def signup_user():
         user_type = data.get("user_type")
         phone_number = data.get("phone_number")
 
+        # Banking information
+        account_number = data.get("account_number")
+        account_type = data.get("account_type")
+        initial_balance = data.get("initial_balance", 0.00)
+
         # Validate required fields
-        if not all([email, password, name, user_type]):
+        if not all([email, password, name, user_type, account_number, account_type]):
             return jsonify({"error": "Missing required fields"}), 400
+
+        # Validate account type
+        if account_type not in ['savings', 'checking']:
+            return jsonify({"error": "Invalid account type. Must be 'savings' or 'checking'"}), 400
 
         # Create user in Firebase
         firebase_user = auth.create_user(email=email, password=password)
@@ -57,12 +66,21 @@ def signup_user():
             firebase_uid=firebase_uid,
             name=name,
             email=email,
+            password=password,  # Add the password here
             user_type=user_type,
             phone_number=phone_number
         )
         session.add(new_user)
-        print("Session New:", session.new)
-        session.commit()
+        session.commit()  # Commit to generate user_id
+
+        # Add banking information
+        new_bank_account = BankAccount(
+            user_id=new_user.user_id,
+            account_number=account_number,
+            account_type=account_type,
+            balance=initial_balance
+        )
+        session.add(new_bank_account)
 
         # Handle driver-specific registration
         if user_type == 'driver':
@@ -70,10 +88,9 @@ def signup_user():
             work_eligibility = data.get("work_eligibility")
             car_insurance = data.get("car_insurance")
             sin = data.get("sin")
-            bank_details = data.get("bank_details")
 
             # Validate driver-specific fields
-            if not all([drivers_license, work_eligibility, car_insurance, sin, bank_details]):
+            if not all([drivers_license, work_eligibility, car_insurance, sin]):
                 session.rollback()
                 return jsonify({"error": "Missing driver-specific fields"}), 400
 
@@ -87,18 +104,16 @@ def signup_user():
                 drivers_license=drivers_license,
                 work_eligibility=work_eligibility,
                 car_insurance=car_insurance,
-                sin=int(sin),  # Convert to integer
-                bank_details=bank_details
+                sin=int(sin)  # Convert to integer
             )
             session.add(driver_details)
-            print("Session New:", session.new)
-            session.commit()
 
+        session.commit()  # Commit all changes
         return jsonify({"message": "User registered successfully!"}), 201
 
     except IntegrityError:
         session.rollback()
-        return jsonify({"error": "Email already exists"}), 400
+        return jsonify({"error": "Email or account number already exists"}), 400
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
@@ -106,7 +121,7 @@ def signup_user():
         session.close()
 
 
-@app.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST'])
 def login_user():
     """Handle user login."""
     try:
@@ -139,7 +154,7 @@ def login_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['POST'])
 def logout_user():
     """
     Revoke the Firebase token to log the user out across devices.
