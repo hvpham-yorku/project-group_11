@@ -8,6 +8,7 @@ This folder contains the database schema and instructions for setting up the Rid
 ## Prerequisites
 - PostgreSQL installed locally or access to a PostgreSQL-compatible cloud database.
 - Command-line access to `psql` or a database management tool like pgAdmin.
+- PostGIS extension installed and enabled in your PostgreSQL instance. PostGIS is required for handling geographic data used in the RideEase backend.
 
 ## Setup Instructions
 
