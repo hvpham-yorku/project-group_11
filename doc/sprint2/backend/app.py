@@ -9,6 +9,7 @@ from backend.services.firebase_setup import initialize_firebase
 from backend.routes.auth import auth_bp
 from backend.routes.ride import ride_bp
 from backend.routes.fare import fare_bp
+from backend.routes.feedback import feedback_bp
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +32,7 @@ with app.app_context():
 app.register_blueprint(auth_bp, url_prefix="/auth")  # Routes for authentication
 app.register_blueprint(ride_bp, url_prefix="/ride")  # Routes for Ride Requests
 app.register_blueprint(fare_bp, url_prefix="/fare")  # Routes for fare and payment
+app.register_blueprint(feedback_bp, url_prefix="/feedback")  # Routes for feedback and complaints
 
 # Add a health check endpoint
 @app.route("/")

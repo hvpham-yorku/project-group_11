@@ -157,37 +157,123 @@ def login_user():
 @auth_bp.route('/logout', methods=['POST'])
 def logout_user():
     """
-    Revoke the Firebase token to log the user out across devices.
+    Revoke the Firebase token to log the user out across devices,
+    and set driver status to offline if applicable.
     """
-    try:
-        # Debugging: Check request data
-        print("Headers:", request.headers)
-        print("Request JSON Body:", request.json)
+    with db.SessionLocal() as session:
+        try:
+            # Debugging: Check request data
+            print("Headers:", request.headers)
+            print("Request JSON Body:", request.json)
 
-        # Parse the JSON body
-        data = request.json
+            # Parse the JSON body
+            data = request.json
 
-        if not data:
-            return jsonify({"error": "Request body is empty or invalid JSON"}), 400
+            if not data:
+                return jsonify({"error": "Request body is empty or invalid JSON"}), 400
 
-        id_token = data.get("idToken")
+            id_token = data.get("idToken")
 
-        if not id_token:
-            return jsonify({"error": "Missing idToken"}), 400
+            if not id_token:
+                return jsonify({"error": "Missing idToken"}), 400
 
-        # Verify the idToken and get the user details
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token['uid']
+            # Verify the idToken and get the user details
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token['uid']
 
-        # Revoke the user's session
-        auth.revoke_refresh_tokens(uid)
+            # Fetch user details from the database using Firebase UID
+            user = session.query(User).filter_by(firebase_uid=uid).first()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
 
-        return jsonify({"message": "User logged out successfully!"}), 200
+            # If the user is a driver, set their status to offline
+            if user.user_type == "driver":
+                user.availability = False
+                session.commit()
 
-    except auth.InvalidIdTokenError:
-        return jsonify({"error": "Invalid idToken"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            # Revoke the user's session
+            auth.revoke_refresh_tokens(uid)
+
+            return jsonify({
+                "message": "User logged out successfully!",
+                "driver_status": "offline" if user.user_type == "driver" else "N/A"
+            }), 200
+
+        except auth.InvalidIdTokenError:
+            return jsonify({"error": "Invalid idToken"}), 400
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
+    
+@auth_bp.route('/update-profile', methods=['PATCH'])
+def update_profile():
+    """Allow a user to update their profile information."""
+    with db.SessionLocal() as session:
+        try:
+            data = request.json
+            user_id = data.get("user_id")
+
+            # Validate user exists
+            user = session.query(User).filter_by(user_id=user_id).first()
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+
+            # Track email update for Firebase
+            updated_email = None
+
+            # Update user details
+            if "name" in data:
+                user.name = data["name"]
+            if "email" in data:
+                updated_email = data["email"]
+                user.email = updated_email
+            if "phone_number" in data:
+                user.phone_number = data["phone_number"]
+
+            # Update bank account details if provided
+            if "account_number" in data or "account_type" in data or "balance" in data:
+                bank_account = session.query(BankAccount).filter_by(user_id=user_id).first()
+                if not bank_account:
+                    return jsonify({"error": "Bank account not found"}), 404
+
+                if "account_number" in data:
+                    bank_account.account_number = data["account_number"]
+                if "account_type" in data:
+                    bank_account.account_type = data["account_type"]
+                if "balance" in data:
+                    bank_account.balance = data["balance"]
+
+            # Commit updates to the database
+            session.commit()
+
+            # Update Firebase if the email was changed
+            if updated_email:
+                try:
+                    # Retrieve Firebase user by UID
+                    firebase_user = auth.get_user(user.firebase_uid)
+                    auth.update_user(firebase_user.uid, email=updated_email)
+                except auth.UserNotFoundError:
+                    return jsonify({"error": "Firebase user not found"}), 404
+                except Exception as firebase_error:
+                    return jsonify({"error": f"Failed to update email in Firebase: {str(firebase_error)}"}), 500
+
+            # Return updated user info
+            updated_user = {
+                "user_id": user.user_id,
+                "name": user.name,
+                "email": user.email,
+                "phone_number": user.phone_number,
+                "bank_account": {
+                    "account_number": bank_account.account_number,
+                    "account_type": bank_account.account_type,
+                    "balance": float(bank_account.balance)
+                } if bank_account else None
+            }
+            return jsonify({"message": "Profile updated successfully!", "updated_user": updated_user}), 200
+
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

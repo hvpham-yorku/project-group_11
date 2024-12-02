@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, func, ForeignKey, TIMESTAMP, Numeric, CheckConstraint
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, func, ForeignKey, TIMESTAMP, Numeric, CheckConstraint, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geography  
+
 
 Base = declarative_base()
 
@@ -19,6 +20,11 @@ class User(Base):
     user_type = Column(Text, nullable=False)  # 'passenger' or 'driver'
     availability = Column(Boolean, default=False)  # Only relevant for drivers
 
+    # New fields for driver ratings
+    average_rating = Column(Numeric(3, 2), default=0.0)  # Example: 4.5
+    total_ratings = Column(Integer, default=0)  # Count of total ratings received
+
+
     # Relationship to the Driver_Details table
     driver_details = relationship("DriverDetails", back_populates="user", uselist=False)
 
@@ -27,6 +33,10 @@ class User(Base):
 
     # Add relationship to Payment
     payments = relationship("Payment", back_populates="user")
+
+    # Add complaints relationship
+    complaints = relationship("Complaints", back_populates="user")
+
 
 
 
@@ -55,11 +65,17 @@ class RideRequests(Base):
     request_id = Column(Integer, primary_key=True, autoincrement=True)
     passenger_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
     driver_id = Column(Integer, ForeignKey('Users.user_id', ondelete='SET NULL'))
+    driver_initial_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=True)  # New field
     pickup_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     dropoff_location = Column(Geography(geometry_type='POINT', srid=4326), nullable=False)
     status = Column(String, default="pending", nullable=False)
     created_at = Column(DateTime, default=func.now())  # Ensure default timestamp
     fare = Column(Numeric(10, 2))  # Consolidated fare column
+
+    # New fields for delay handling
+    delay_reason = Column(Text, nullable=True)
+    updated_eta = Column(DateTime, nullable=True)
+
 
     
     # Relationships
@@ -115,3 +131,37 @@ class Payment(Base):
     def __repr__(self):
         return (f"<Payment(payment_id={self.payment_id}, user_id={self.user_id}, "
                 f"amount={self.amount}, status={self.payment_status})>")
+
+class DriverRatings(Base):
+    __tablename__ = "Driver_Ratings"
+
+    rating_id = Column(Integer, primary_key=True, autoincrement=True)
+    driver_id = Column(Integer, ForeignKey("Users.user_id", ondelete="CASCADE"), nullable=False)
+    passenger_id = Column(Integer, ForeignKey("Users.user_id", ondelete="CASCADE"), nullable=False)
+    ride_id = Column(Integer, ForeignKey("RideRequests.request_id", ondelete="CASCADE"), nullable=False)
+    rating = Column(Numeric(3, 2), nullable=False)
+    review = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    driver = relationship("User", foreign_keys=[driver_id])
+    passenger = relationship("User", foreign_keys=[passenger_id])
+    ride = relationship("RideRequests", foreign_keys=[ride_id])
+
+COMPLAINT_TYPE_ENUM = ("service", "driver", "payment", "other")
+COMPLAINT_STATUS_ENUM = ("open", "in progress", "closed")
+
+
+class Complaints(Base):
+    __tablename__ = "Complaints"
+
+    complaint_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
+    ride_id = Column(Integer, ForeignKey("RideRequests.request_id"), nullable=True)
+    complaint_text = Column(Text, nullable=False)
+    complaint_type = Column(Enum(*COMPLAINT_TYPE_ENUM, name="complaint_type_enum", create_type=False), nullable=False)
+    submitted_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    status = Column(Enum(*COMPLAINT_STATUS_ENUM, name="complaint_status_enum", create_type=False), nullable=False, default="open")
+
+    # Relationship
+    user = relationship("User", back_populates="complaints")

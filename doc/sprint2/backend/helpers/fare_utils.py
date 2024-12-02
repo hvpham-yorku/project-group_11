@@ -115,10 +115,51 @@ def parse_wkt_point(wkt_point):
     except Exception as e:
         raise ValueError(f"Error parsing WKT point: {e}")
 
-if __name__ == "__main__":
-    origin = "37.7749,-122.4194"  # San Francisco, CA
-    destination = "34.0522,-118.2437"  # Los Angeles, CA
-    
-    distance, duration = get_distance_and_duration(origin, destination)
+def geocode(address):
+    """
+    Convert a human-readable address into latitude and longitude using Google Maps API.
 
-    print(distance, duration)
+    Args:
+        address (str): A street address or location name.
+
+    Returns:
+        tuple: A tuple containing latitude and longitude as strings.
+
+    Raises:
+        ValueError: If the address cannot be geocoded.
+    """
+    GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+    try:
+        url = f"https://maps.googleapis.com/maps/api/geocode/json"
+        params = {
+            "address": address,
+            "key": GOOGLE_MAPS_API_KEY
+        }
+        response = requests.get(url, params=params)
+
+        if response.status_code != 200:
+            raise ValueError("Failed to connect to the Geocoding API")
+
+        data = response.json()
+        if data.get("status") != "OK":
+            raise ValueError(data.get("error_message", "Unknown error"))
+
+        # Extract the latitude and longitude
+        results = data.get("results", [])
+        if results:
+            location = results[0]["geometry"]["location"]
+            return str(location["lat"]), str(location["lng"])
+
+        raise ValueError("Address not found")
+    except Exception as e:
+        raise ValueError(f"Error fetching coordinates: {e}")
+
+
+if __name__ == "__main__":
+    address = "1600 Amphitheatre Parkway, Mountain View, CA"
+    try:
+        lat, lng = geocode(address)
+        print(f"Address: {address}")
+        print(f"Latitude: {lat}, Longitude: {lng}")
+    except ValueError as e:
+        print(f"Error: {e}")
