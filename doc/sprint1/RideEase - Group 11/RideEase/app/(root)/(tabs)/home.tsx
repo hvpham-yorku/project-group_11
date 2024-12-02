@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Page() {
   const { user } = useUser();
+  const handleSignOut = () => {}
+  const handleDestinationPress = () => {}
 
   return (
     <SafeAreaView className="flex-1 justify-center bg-green-400">

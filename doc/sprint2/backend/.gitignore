@@ -1,0 +1,20 @@
+# Ignore environment files
+.env
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environments
+venv/
+.venv/
+
+# Ignore SQLite databases (if applicable)
+*.sqlite3
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+services/firebase_key.json
