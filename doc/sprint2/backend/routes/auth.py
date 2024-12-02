@@ -1,4 +1,3 @@
-
 import sys
 import os
 # Dynamically add 'sprint2' to the path
@@ -43,19 +42,25 @@ def signup_user():
         name = data.get("name")
         user_type = data.get("user_type")
         phone_number = data.get("phone_number")
-
-        # Banking information
         account_number = data.get("account_number")
         account_type = data.get("account_type")
         initial_balance = data.get("initial_balance", 0.00)
 
-        # Validate required fields
-        if not all([email, password, name, user_type, account_number, account_type]):
+        # Validate required fields for all users
+        if not all([email, password, name, user_type, phone_number, account_number, account_type]):
             return jsonify({"error": "Missing required fields"}), 400
+
+        # Validate user_type
+        if user_type not in ["passenger", "driver"]:
+            return jsonify({"error": "Invalid user type. Must be 'passenger' or 'driver'"}), 400
 
         # Validate account type
         if account_type not in ['savings', 'checking']:
             return jsonify({"error": "Invalid account type. Must be 'savings' or 'checking'"}), 400
+
+        # Additional validation for savings accounts
+        if account_type == 'savings' and initial_balance < 500.00:
+            return jsonify({"error": "Savings accounts require a minimum initial balance of $500.00"}), 400
 
         # Create user in Firebase
         firebase_user = auth.create_user(email=email, password=password)
@@ -66,14 +71,14 @@ def signup_user():
             firebase_uid=firebase_uid,
             name=name,
             email=email,
-            password=password,  # Add the password here
+            password=password,  # Add the password here (use hashing in production)
             user_type=user_type,
             phone_number=phone_number
         )
         session.add(new_user)
         session.commit()  # Commit to generate user_id
 
-        # Add banking information
+        # Add banking information for all users
         new_bank_account = BankAccount(
             user_id=new_user.user_id,
             account_number=account_number,
@@ -83,7 +88,7 @@ def signup_user():
         session.add(new_bank_account)
 
         # Handle driver-specific registration
-        if user_type == 'driver':
+        if user_type == "driver":
             drivers_license = data.get("drivers_license")
             work_eligibility = data.get("work_eligibility")
             car_insurance = data.get("car_insurance")
@@ -96,6 +101,7 @@ def signup_user():
 
             # Validate SIN
             if not sin.isdigit() or len(sin) != 9 or sin.startswith("0"):
+                session.rollback()
                 return jsonify({"error": "Invalid SIN provided"}), 400
 
             # Save driver-specific data to Driver_Details table
@@ -113,7 +119,7 @@ def signup_user():
 
     except IntegrityError:
         session.rollback()
-        return jsonify({"error": "Email or account number already exists"}), 400
+        return jsonify({"error": "Email already exists"}), 400
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500
