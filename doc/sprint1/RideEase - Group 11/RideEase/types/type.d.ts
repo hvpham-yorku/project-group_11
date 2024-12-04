@@ -34,14 +34,11 @@ declare interface Driver_rating {
 declare interface MarkerData {
     latitude: number;
     longitude: number;
-    id: number;
+    driver_id: number;
     title: string;
-    profile_image_url: string;
-    car_image_url: string;
-    car_seats: number;
-    rating: number;
-    first_name: string;
-    last_name: string;
+    //capacity: number;
+    //rating: number;
+    name: string;
     time?: number;
     price?: string;
 }
