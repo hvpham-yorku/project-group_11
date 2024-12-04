@@ -70,7 +70,7 @@ export default function Page() {
   const { setUserLocation, setDestinationLocation } = useLocationStore()
   const { user } = useUser();
 
-  const handleStignOut = () => {}
+  const handleSignOut = () => {}
   const handleDestinationPress = () => {}
 
   useEffect(() => {
