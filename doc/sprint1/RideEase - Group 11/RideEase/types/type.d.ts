@@ -113,7 +113,7 @@ declare interface PaymentProps {
     fullName: string;
     email: string;
     amount: string;
-    driverId: number;
+    driver_id: number;
     rideTime: number;
 }
 

@@ -9,13 +9,13 @@ import { icons } from "@/constants"
 
 const drivers = [
     {
-        "driver_id": "1",
+        "driver_id": 1,
         "name": "James Wilson",
         "capacity": 3,
         "rating": "4.90"
     },
     {
-        "driver_id": "2",
+        "driver_id": 2,
         "name": "David Brown",
         "capacity": 5,
         "rating": "4.60"
@@ -41,6 +41,9 @@ const Map = () => {
     })
 
     useEffect(() => {
+        // TODO: Remove
+        setDrivers(drivers);
+
         if(Array.isArray(drivers)) {
             if(!userLatitude || !userLongitude) return;
 
