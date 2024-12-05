@@ -6,6 +6,7 @@ import { DriverStore } from "@/types/type"
 import { useEffect, useState } from "react"
 import { MarkerData } from "@/types/type"
 import { icons } from "@/constants"
+import MapViewDirections from "react-native-maps-directions"
 
 const drivers = [
     {
@@ -81,6 +82,34 @@ const Map = () => {
                 }
                 />
             ))}
+
+            {destinationLatitude && destinationLongitude && (
+                <>
+                <Marker
+                key="destination"
+                coordinate={{
+                    latitude: destinationLatitude,
+                    longitude: destinationLongitude
+                }}
+                title="Destination"
+                image={icons.pin}
+                />
+
+                <MapViewDirections 
+                    origin={{
+                        latitude: userLatitude!,
+                        longitude: userLongitude!,
+                    }}
+                    destination={{
+                        latitude: destinationLatitude,
+                        longitude: destinationLongitude,
+                    }}
+                    apikey={process.env.EXPO_PUBLIC_GOOGLE_API_KEY}
+                    strokeColor="#4ade80"
+                    strokeWidth={3}
+                />
+                </>
+            )}
         </MapView>
     )
 }

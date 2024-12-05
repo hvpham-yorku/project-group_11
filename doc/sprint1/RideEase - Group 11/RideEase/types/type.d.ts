@@ -11,6 +11,19 @@ declare interface Driver {
     bank_details: string;
 }
 
+declare interface Request {
+    requestId: number; // Unique identifier for the request
+    passenger: {
+      name: string; // Passenger's name
+      email: string; // Passenger's email
+    };
+    origin_address: string; // Pickup address
+    destination_address: string; // Dropoff address
+    fare: number; // Fare amount
+    status: string // Status of the request
+    created_at: string; // Timestamp of when the request was created
+  };
+
 declare interface Vehicles {
     vehicle_id: number;
     driver_id: number;

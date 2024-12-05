@@ -39,3 +39,29 @@ export const useDriverStore = create<DriverStore>((set) => ({
 
 }))
 
+export type RideRequest = {
+    id: number;
+    origin: string;
+    destination: string;
+    fare: number;
+    status: "pending" | "accepted" | "completed";
+};
+
+type RideRequestsStore = {
+    rideRequests: RideRequest[];
+    setRideRequests: (requests: RideRequest[]) => void;
+    acceptRideRequest: (id: number) => void;
+};
+
+export const useRideRequestsStore = create<RideRequestsStore>((set) => ({
+    rideRequests: [],
+    setRideRequests: (requests: RideRequest[]) =>
+        set(() => ({ rideRequests: requests })),
+    acceptRideRequest: (id: number) =>
+        set((state) => ({
+            rideRequests: state.rideRequests.map((request: RideRequest) =>
+                request.id === id ? { ...request, status: "accepted" } : request
+            ),
+        })),
+}));
+
