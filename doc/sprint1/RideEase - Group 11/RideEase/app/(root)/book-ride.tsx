@@ -1,13 +1,14 @@
-import { useUser } from "@clerk/clerk-expo";
+import React, { useContext } from "react";
 import { Image, Text, View, Alert } from "react-native";
 import RideLayout from "@/components/RideLayout";
 import { icons } from "@/constants";
 import { useDriverStore, useLocationStore } from "@/store";
 import CustomButton from "@/components/CustomButton";
 import { router } from "expo-router";
+import { AuthContext } from "@/lib/AuthProvider"; // Ensure this is the correct path to your AuthProvider
 
 const BookRide = () => {
-    const { user } = useUser();
+    //const { user } = useContext(AuthContext); // Access the authenticated user from the context
     const { userAddress, destinationAddress } = useLocationStore();
     const { drivers, selectedDriver } = useDriverStore();
 

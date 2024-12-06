@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { getAuth, signOut } from 'firebase/auth'; // Import Firebase Auth functions
+//import { AuthContext } from "@/lib/AuthProvider"; 
+//import React, { useContext } from "react";
 
 const recentRides = [
   {
@@ -68,6 +70,7 @@ const recentRides = [
 ];
 
 export default function Page() {
+  //const { user } = useContext(AuthContext);
   const { setUserLocation, setDestinationLocation } = useLocationStore();
   const [hasPermissions, setHasPermissions] = useState(false);
 
@@ -130,7 +133,7 @@ export default function Page() {
           <>
             <View className="flex flex-row items-center justify-between my-5">
               <Text className="text-2xl mx-3">
-                Welcome, User
+                Welcome back!
               </Text>
               <TouchableOpacity
                 onPress={handleSignOut}

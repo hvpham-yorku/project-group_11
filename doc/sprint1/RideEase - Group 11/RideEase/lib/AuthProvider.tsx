@@ -1,41 +1,39 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import firebaseApp from '@/firebaseConfig'; // Adjust to your actual Firebase config path
+import React, { createContext, useState, useEffect, ReactNode } from "react";
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import firebaseApp from "@/firebaseConfig"; // Adjust path as needed
 
-// Define the shape of the AuthContext
 interface AuthContextType {
   user: User | null;
   loading: boolean;
 }
 
-// Create the AuthContext
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Define Props for the AuthProvider
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Create the AuthProvider component
-export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  
+  
+
   useEffect(() => {
     const auth = getAuth(firebaseApp);
-
-    // Listen for authentication state changes
+    // Listen to auth state changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Auth State Changed:", currentUser); // Debugging
       setUser(currentUser);
-      setLoading(false);
+      setLoading(false); // Stop loading after checking auth state
     });
 
     return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider 
-    value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
