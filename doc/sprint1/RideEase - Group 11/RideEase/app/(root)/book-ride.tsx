@@ -25,7 +25,7 @@ const BookRide = () => {
                     onPress: () => {
                         // Ensure navigation executes
                         setTimeout(() => {
-                            router.push("/(root)/(tabs)/rides");
+                            router.push("/(root)/(tabs)/home");
                         }, 0);
                     },
                 },

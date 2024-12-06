@@ -54,7 +54,9 @@ const Onboarding = () => {
       {activeIndex === onboarding.length - 1 && (
         <View className="flex flex-row space-x-4 mt-5">
           <TouchableOpacity
-            onPress={() => router.push("/(auth)/sign-up")}
+          // TODO:
+          // Change to SignUpAs
+            onPress={() => router.push("/(auth)/SignUpAsScreen")}
             className="bg-blue-500 px-4 py-2 rounded-full"
           >
             <Text className="text-white text-lg">Sign Up</Text>
