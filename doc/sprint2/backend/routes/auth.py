@@ -130,35 +130,50 @@ def signup_user():
 @auth_bp.route('/login', methods=['POST'])
 def login_user():
     """Handle user login."""
-    try:
-        # Get login data
-        data = request.json
-        email = data.get("email")
-        password = data.get("password")
+    with db.SessionLocal() as session:
+        try:
+            # Get login data
+            data = request.json
+            email = data.get("email")
+            password = data.get("password")
 
-        # Validate input
-        if not all([email, password]):
-            return jsonify({"error": "Missing email or password"}), 400
+            # Validate input
+            if not all([email, password]):
+                return jsonify({"error": "Missing email or password"}), 400
 
-        # Call Firebase Authentication REST API
-        payload = {
-            "email": email,
-            "password": password,
-            "returnSecureToken": True
-        }
-        response = requests.post(FIREBASE_AUTH_URL, json=payload)
+            # Call Firebase Authentication REST API
+            payload = {
+                "email": email,
+                "password": password,
+                "returnSecureToken": True
+            }
+            response = requests.post(FIREBASE_AUTH_URL, json=payload)
 
-        if response.status_code == 200:
-            # Successful login
-            user_info = response.json()
-            return jsonify({"message": f"User {user_info['email']} logged in successfully!", "idToken": user_info['idToken']}), 200
-        else:
-            # Handle authentication failure
-            error_message = response.json().get("error", {}).get("message", "Authentication failed.")
-            return jsonify({"error": error_message}), 401
+            if response.status_code == 200:
+                # Successful login
+                user_info = response.json()
+                firebase_uid = user_info['localId']
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+                # Fetch user details from your database
+                user = session.query(User).filter_by(firebase_uid=firebase_uid).first()
+                if not user:
+                    return jsonify({"error": "User not found in the database"}), 404
+
+                # Return user-specific data along with idToken
+                return jsonify({
+                    "message": f"User {user.email} logged in successfully!",
+                    "idToken": user_info['idToken'],
+                    "user_id": user.user_id,
+                    "user_type": user.user_type  # Optional: Add additional user-specific info if needed
+                }), 200
+            else:
+                # Handle authentication failure
+                error_message = response.json().get("error", {}).get("message", "Authentication failed.")
+                return jsonify({"error": error_message}), 401
+
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout_user():
