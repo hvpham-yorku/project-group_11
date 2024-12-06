@@ -105,6 +105,17 @@ const Layout = () => (
           )
         }}
       />
+
+<Tabs.Screen
+        name="view-requests"
+        options={{
+          title: 'View Requests',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.selectedMarker} />
+          )
+        }}
+      />
       
     </Tabs>
   );

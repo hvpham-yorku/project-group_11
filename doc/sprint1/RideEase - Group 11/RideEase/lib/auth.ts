@@ -1,28 +1,30 @@
-import * as SecureStore from 'expo-secure-store'
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import firebaseApp from '@/firebaseConfig';
 
+const auth = getAuth(firebaseApp);
 
-
-  export const tokenCache = {
-    async getToken(key: string) {
-      try {
-        const item = await SecureStore.getItemAsync(key)
-        if (item) {
-          console.log(`${key} was used 🔐 \n`)
-        } else {
-          console.log('No values stored under key: ' + key)
-        }
-        return item
-      } catch (error) {
-        console.error('SecureStore get item error: ', error)
-        await SecureStore.deleteItemAsync(key)
-        return null
-      }
-    },
-    async saveToken(key: string, value: string) {
-      try {
-        return SecureStore.setItemAsync(key, value)
-      } catch (err) {
-        return
-      }
-    },
+// Sign Up Function
+export const signUp = async (email: string, password: string): Promise<any> => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log('User signed up:', userCredential.user);
+    return userCredential.user;
+  } catch (error) {
+    if (error instanceof Error)
+    console.error('Error signing up:', error.message);
+    throw error;
   }
+};
+
+// Sign In Function
+export const signIn = async (email: string, password: string): Promise<any> => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log('User signed in:', userCredential.user);
+    return userCredential.user;
+  } catch (error) {
+    if (error instanceof Error)
+    console.error('Error signing in:', error.message);
+    throw error;
+  }
+};

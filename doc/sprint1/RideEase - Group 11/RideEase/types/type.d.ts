@@ -11,6 +11,19 @@ declare interface Driver {
     bank_details: string;
 }
 
+declare interface Request {
+    requestId: number; // Unique identifier for the request
+    passenger: {
+      name: string; // Passenger's name
+      email: string; // Passenger's email
+    };
+    origin_address: string; // Pickup address
+    destination_address: string; // Dropoff address
+    fare: number; // Fare amount
+    status: string // Status of the request
+    created_at: string; // Timestamp of when the request was created
+  };
+
 declare interface Vehicles {
     vehicle_id: number;
     driver_id: number;
@@ -34,14 +47,11 @@ declare interface Driver_rating {
 declare interface MarkerData {
     latitude: number;
     longitude: number;
-    id: number;
+    driver_id: number;
     title: string;
-    profile_image_url: string;
-    car_image_url: string;
-    car_seats: number;
-    rating: number;
-    first_name: string;
-    last_name: string;
+    //capacity: number;
+    //rating: number;
+    name: string;
     time?: number;
     price?: string;
 }
@@ -116,7 +126,7 @@ declare interface PaymentProps {
     fullName: string;
     email: string;
     amount: string;
-    driverId: number;
+    driver_id: number;
     rideTime: number;
 }
 
