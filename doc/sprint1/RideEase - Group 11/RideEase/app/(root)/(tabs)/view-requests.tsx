@@ -87,7 +87,7 @@ export default function ViewRequests() {
       .map((coord) => coord.trim());
 
     return (
-      <SafeAreaView className="bg-white-400 flex-1 p-5">
+      <SafeAreaView className="bg-white flex-1 p-5">
         <>
           <Text className="text-xl mt-5 mb-3">Your Current Location</Text>
           <View className="flex flex-row items-center bg-transparent h-[300px]">

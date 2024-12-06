@@ -133,11 +133,11 @@ export default function Page() {
           <>
             <View className="flex flex-row items-center justify-between my-5">
               <Text className="text-2xl mx-3">
-                Welcome back!
+                Welcome Back to RideEase!
               </Text>
               <TouchableOpacity
                 onPress={handleSignOut}
-                className="justify-center items-center w-10 h-10 rounded-full bg-white"
+                className="justify-center items-center w-10 h-10 pr-5 rounded-full bg-white"
               >
                 <Image source={icons.out} className="w-7 h-7" />
               </TouchableOpacity>
