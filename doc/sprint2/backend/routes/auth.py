@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 from flask import Flask, Blueprint, request, jsonify
 from firebase_admin import auth
 from sqlalchemy.exc import IntegrityError
-from backend.models.models import User, DriverDetails, BankAccount
+from backend.models.models import User, DriverDetails, BankAccount, RideRequests
 from backend.db.database_setup import db
 from backend.services.firebase_setup import initialize_firebase
 import requests
@@ -130,35 +130,50 @@ def signup_user():
 @auth_bp.route('/login', methods=['POST'])
 def login_user():
     """Handle user login."""
-    try:
-        # Get login data
-        data = request.json
-        email = data.get("email")
-        password = data.get("password")
+    with db.SessionLocal() as session:
+        try:
+            # Get login data
+            data = request.json
+            email = data.get("email")
+            password = data.get("password")
 
-        # Validate input
-        if not all([email, password]):
-            return jsonify({"error": "Missing email or password"}), 400
+            # Validate input
+            if not all([email, password]):
+                return jsonify({"error": "Missing email or password"}), 400
 
-        # Call Firebase Authentication REST API
-        payload = {
-            "email": email,
-            "password": password,
-            "returnSecureToken": True
-        }
-        response = requests.post(FIREBASE_AUTH_URL, json=payload)
+            # Call Firebase Authentication REST API
+            payload = {
+                "email": email,
+                "password": password,
+                "returnSecureToken": True
+            }
+            response = requests.post(FIREBASE_AUTH_URL, json=payload)
 
-        if response.status_code == 200:
-            # Successful login
-            user_info = response.json()
-            return jsonify({"message": f"User {user_info['email']} logged in successfully!", "idToken": user_info['idToken']}), 200
-        else:
-            # Handle authentication failure
-            error_message = response.json().get("error", {}).get("message", "Authentication failed.")
-            return jsonify({"error": error_message}), 401
+            if response.status_code == 200:
+                # Successful login
+                user_info = response.json()
+                firebase_uid = user_info['localId']
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+                # Fetch user details from your database
+                user = session.query(User).filter_by(firebase_uid=firebase_uid).first()
+                if not user:
+                    return jsonify({"error": "User not found in the database"}), 404
+
+                # Return user-specific data along with idToken
+                return jsonify({
+                    "message": f"User {user.email} logged in successfully!",
+                    "idToken": user_info['idToken'],
+                    "user_id": user.user_id,
+                    "user_type": user.user_type  # Optional: Add additional user-specific info if needed
+                }), 200
+            else:
+                # Handle authentication failure
+                error_message = response.json().get("error", {}).get("message", "Authentication failed.")
+                return jsonify({"error": error_message}), 401
+
+        except Exception as e:
+            session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout_user():
@@ -168,10 +183,6 @@ def logout_user():
     """
     with db.SessionLocal() as session:
         try:
-            # Debugging: Check request data
-            print("Headers:", request.headers)
-            print("Request JSON Body:", request.json)
-
             # Parse the JSON body
             data = request.json
 
@@ -192,6 +203,19 @@ def logout_user():
             if not user:
                 return jsonify({"error": "User not found"}), 404
 
+            # Check if the user is in an active ride or has a pending ride request
+            active_ride = session.query(RideRequests).filter(
+                (RideRequests.driver_id == user.user_id if user.user_type == "driver" else RideRequests.passenger_id == user.user_id),
+                RideRequests.status.in_(["pending", "matched", "in progress"])  # Include 'pending' status
+            ).first()
+
+            if active_ride:
+                return jsonify({
+                    "error": "Cannot log out while in an active ride or with a pending ride request.",
+                    "ride_id": active_ride.request_id,
+                    "status": active_ride.status
+                }), 400
+
             # If the user is a driver, set their status to offline
             if user.user_type == "driver":
                 user.availability = False
@@ -210,6 +234,7 @@ def logout_user():
         except Exception as e:
             session.rollback()
             return jsonify({"error": str(e)}), 500
+
     
 @auth_bp.route('/update-profile', methods=['PATCH'])
 def update_profile():
