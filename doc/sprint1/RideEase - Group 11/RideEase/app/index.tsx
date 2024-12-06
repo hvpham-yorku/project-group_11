@@ -3,6 +3,7 @@ import React, { useContext } from "react";
 import { Redirect } from "expo-router";
 import { AuthContext } from "@/lib/AuthProvider";
 import { View, Text } from "react-native";
+import { LogBox } from "react-native"
 
 const Home = () => {
   const authContext = useContext(AuthContext);
@@ -10,6 +11,8 @@ const Home = () => {
   if (!authContext) {
     throw new Error("AuthContext is not defined. Ensure AuthProvider is correctly wrapped around the app.");
   }
+
+  LogBox.ignoreLogs(["Text strings must be rendered within a <Text> component"]);
 
   const { user, loading } = authContext;
 
