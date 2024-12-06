@@ -5,16 +5,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { images } from '@/constants';
 import { Image, View, Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo'
-import { tokenCache } from '@/lib/auth';
-
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
-
-
-
+import { AuthProvider } from '@//lib/AuthProvider'; // Import the AuthProvider
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -39,22 +32,16 @@ export default function RootLayout() {
     );
   }
 
-  if (!publishableKey) {
-    throw new Error(
-      'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
-    )
-  }
   return (
-    <ClerkProvider publishableKey={publishableKey}
-    tokenCache={tokenCache}>
-    <ClerkLoaded>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="(root)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack>
-      </ClerkLoaded>
-      </ClerkProvider>
+    <AuthProvider> {/* Wrap the app with AuthProvider */}
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="(root)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
