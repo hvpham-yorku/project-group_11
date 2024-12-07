@@ -1,5 +1,4 @@
 import { Text, View, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { ScrollView } from "react-native";
 import { Image } from "react-native";
 import { images } from "@/constants";
@@ -7,15 +6,14 @@ import InputField from "@/components/InputField";
 import { useState } from "react";
 import { icons } from "@/constants";
 import CustomButton from "@/components/CustomButton";
-import { Link, useRouter } from "expo-router"; // Added useRouter for navigation
-import { signIn } from "@/lib/auth"; // Import the Firebase sign-in function
+import { Link, useRouter } from "expo-router";
+import axios from "axios";
 
 const SignIn = () => {
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
-
   const [loading, setLoading] = useState(false); // For button state
   const router = useRouter(); // Navigation handler
 
@@ -40,17 +38,31 @@ const SignIn = () => {
 
     try {
       setLoading(true); // Start loading
-      const user = await signIn(email, password); // Call Firebase sign-in function
-      Alert.alert("Success", `Welcome back, ${user.email}!`);
-      router.push("/home"); // Navigate to the main app screen or dashboard
-    } catch (error: any) {
-      if (error.code === "auth/user-not-found") {
-        Alert.alert("Error", "No account found with this email.");
-      } else if (error.code === "auth/wrong-password") {
-        Alert.alert("Error", "Invalid password. Please try again.");
-      } else {
-        Alert.alert("Error", error.message || "An unexpected error occurred.");
+
+      // Construct request payload
+      const payload = {
+        email,
+        password,
+      };
+
+      // Make a POST request to the backend
+      const response = await axios.post("http://192.168.86.76:5000/auth/login", payload);
+
+      if (response.status === 200) {
+        // Successful login
+        const { message, user_id, user_type, idToken } = response.data;
+        Alert.alert("Success", message);
+        
+        // You can save the token to secure storage or context for session management
+        console.log("User ID:", user_id);
+        console.log("User Type:", user_type);
+        console.log("ID Token:", idToken);
+
+        router.push("/home"); // Navigate to the main app screen
       }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false); // Stop loading
     }
@@ -61,7 +73,7 @@ const SignIn = () => {
       <View className="flex-1 bg-white">
         <View className="relative w-full h-[225px]">
           <Image source={images.splash} className="z-0 w-full h-[200px]" />
-          <Text className="text-xl text-white font-JakartaSemiBold absolute bottom-6 left-4">
+          <Text className="text-xl text-white absolute bottom-6 left-4">
             Welcome Back
           </Text>
         </View>

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, func, ForeignKey, TIMESTAMP, Numeric, CheckConstraint, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from geoalchemy2 import Geography  
+from geoalchemy2 import Geography
 
 
 Base = declarative_base()

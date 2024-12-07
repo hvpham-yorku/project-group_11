@@ -10,7 +10,6 @@ declare interface Driver {
     sin: string;
     bank_details: string;
 }
-
 declare interface Request {
     requestId: number; // Unique identifier for the request
     passenger: {
@@ -64,9 +63,31 @@ declare interface MapProps {
     onMapReady?: () => void;
 }
 
-declare interface Ride {
-    pickup_location: string;
-    dropoff_location: string;
+// declare interface Ride {
+//     pickup_location: string;
+//     dropoff_location: string;
+//     pickup_time: string;
+//     dropoff_time: string;
+//     fare: number;
+//     status: string;
+//     driver_id: number;
+//     user_email: string;
+//     created_at: string;
+//     driver: {
+//         driver_id: number;
+//         name: string;
+//         make: string;
+//         model: string;
+//         year: number;
+//         license_plate: string;
+//         capacity: number;
+//         rating: number;
+//     };
+// }
+
+export interface Ride {
+    pickup_location: string; // "latitude,longitude"
+    dropoff_location: string; // "latitude,longitude"
     pickup_time: string;
     dropoff_time: string;
     fare: number;
@@ -74,17 +95,9 @@ declare interface Ride {
     driver_id: number;
     user_email: string;
     created_at: string;
-    driver: {
-        driver_id: number;
-        name: string;
-        make: string;
-        model: string;
-        year: number;
-        license_plate: string;
-        capacity: number;
-        rating: number;
-    };
-}
+    request_id: number;
+    driver: Driver; // Nested object for driver details
+  }
 
 declare interface ButtonProps extends TouchableOpacityProps {
     title: string;

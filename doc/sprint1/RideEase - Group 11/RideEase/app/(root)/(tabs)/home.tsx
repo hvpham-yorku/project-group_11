@@ -1,115 +1,70 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlatList, View, Text, TouchableOpacity, Image, Alert } from 'react-native';
-import RideCard from '@/components/RideCard';
-import { icons } from '@/constants';
-import GoogleTextInput from '@/components/GoogleTextInput';
-import Map from '@/components/Map';
-import { useLocationStore } from '@/store';
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
-import { router } from 'expo-router';
-import { getAuth, signOut } from 'firebase/auth'; // Import Firebase Auth functions
-//import { AuthContext } from "@/lib/AuthProvider"; 
-//import React, { useContext } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FlatList, View, Text, TouchableOpacity, Image, Alert } from "react-native";
+import RideCard from "@/components/RideCard";
+import { icons } from "@/constants";
+import GoogleTextInput from "@/components/GoogleTextInput";
+import Map from "@/components/Map";
+import { useLocationStore } from "@/store";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import * as Location from "expo-location";
+import { router } from "expo-router";
+import { getAuth, signOut } from "firebase/auth";
+import { Ride } from "@/types/type";
 
-const recentRides = [
-  {
-    driver: {
-      driver_id: 1,
-      name: "testName",
-      make: "BMW",
-      model: "M4",
-      year: 2024,
-      license_plate: "GAJK 768",
-      capacity: 4,
-      rating: 4,
-    },
-    origin_address: "123 Main St",
-    destination_address: "456 Elm St",
-    origin_latitude: 45.4215,
-    origin_longitude: -75.6972,
-    destination_latitude: 45.4235,
-    destination_longitude: -75.6952,
-    pickup_location: "45.4215,-75.6972",
-    dropoff_location: "45.4235,-75.6952",
-    pickup_time: "2024-12-02T10:00:00Z",
-    dropoff_time: "2024-12-02T10:30:00Z",
-    fare: 25.0,
-    status: "completed",
-    driver_id: 1,
-    user_email: "user@example.com",
-    created_at: "2024-12-01T08:00:00Z",
-  },
-  {
-    driver: {
-      driver_id: 2,
-      name: "testName2",
-      make: "BMW",
-      model: "M340i",
-      year: 2024,
-      license_plate: "KLGR 457",
-      capacity: 4,
-      rating: 4.5,
-    },
-    origin_address: "789 Oak St",
-    destination_address: "321 Pine St",
-    origin_latitude: 45.4216,
-    origin_longitude: -75.6973,
-    destination_latitude: 45.4236,
-    destination_longitude: -75.6953,
-    pickup_location: "45.4216,-75.6973",
-    dropoff_location: "45.4236,-75.6953",
-    pickup_time: "2024-12-02T11:00:00Z",
-    dropoff_time: "2024-12-02T11:30:00Z",
-    fare: 30.0,
-    status: "completed",
-    driver_id: 2,
-    user_email: "user2@example.com",
-    created_at: "2024-12-01T09:00:00Z",
-  },
-];
-
-export default function Page() {
-  //const { user } = useContext(AuthContext);
+export default function HomePage() {
   const { setUserLocation, setDestinationLocation } = useLocationStore();
   const [hasPermissions, setHasPermissions] = useState(false);
+  const [recentRides, setRecentRides] = useState<Ride[]>([]);
 
   const handleSignOut = async () => {
-    const auth = getAuth(); // Get the Firebase Auth instance
+    const auth = getAuth();
     try {
-      await signOut(auth); // Sign out the user
-      router.replace("/(auth)/sign-in"); // Redirect to the welcome screen
+      await signOut(auth);
+      router.replace("/(auth)/sign-in");
       Alert.alert("Success", "You have been signed out.");
     } catch (error: any) {
       Alert.alert("Error", error.message || "An error occurred during sign-out.");
     }
   };
 
-  const handleDestinationPress = (location: { 
-    latitude: number; 
-    longitude: number; 
-    address: string; 
-  }) => {
+  const handleDestinationPress = (location: { latitude: number; longitude: number; address: string }) => {
     setDestinationLocation(location);
     router.push("/(root)/find-ride");
   };
 
   useEffect(() => {
+    const fetchRides = async () => {
+      try {
+        const response = await axios.post(
+          "http://192.168.86.76:5000/ride/view-requests",
+          {
+            driver_id: 1, // Replace with the actual driver ID
+            address: "123 Main St", // Replace with the driver's current location address
+          }
+        );
+        const { ride_requests } = response.data; // Assuming the API response contains a 'ride_requests' field
+        setRecentRides(ride_requests);
+      } catch (error) {
+        console.error("Error fetching rides:", error);
+      }
+    };
+
+    fetchRides();
+  }, []);
+
+  useEffect(() => {
     const requestLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== 'granted') {
+      if (status !== "granted") {
         setHasPermissions(false);
         return;
       }
-
       let location = await Location.getCurrentPositionAsync();
-
       const address = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude!,
-        longitude: location.coords.longitude!,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
       });
-
       setUserLocation({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -123,18 +78,15 @@ export default function Page() {
   return (
     <SafeAreaView className="bg-white">
       <FlatList
-        data={recentRides.slice(0, 2)}
-        renderItem={({ item }) => <RideCard ride={item} />}
+        data={recentRides}
+        renderItem={({ item }: { item: Ride }) => <RideCard ride={item} />}
+        keyExtractor={(item) => item.request_id.toString()}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          paddingBottom: 100,
-        }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         ListHeaderComponent={() => (
           <>
             <View className="flex flex-row items-center justify-between my-5">
-              <Text className="text-2xl mx-3">
-                Welcome Back to RideEase!
-              </Text>
+              <Text className="text-2xl mx-3">Welcome Back to RideEase!</Text>
               <TouchableOpacity
                 onPress={handleSignOut}
                 className="justify-center items-center w-10 h-10 pr-5 rounded-full bg-white"

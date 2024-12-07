@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signUp } from '@/lib/auth'; // Import the Firebase sign-up function
+import axios from 'axios';
 import { router } from 'expo-router';
 
 export default function DriverSignUpScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('');
+  const [userType] = useState('driver'); // Fixed to "driver"
   const [phoneNumber, setPhoneNumber] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [accountType, setAccountType] = useState('');
@@ -40,11 +40,33 @@ export default function DriverSignUpScreen() {
 
     try {
       setLoading(true);
-      await signUp(email, password); // Call the Firebase sign-up function
+
+      // Construct request payload
+      const payload = {
+        name,
+        email,
+        password,
+        user_type: userType,
+        phone_number: phoneNumber,
+        account_number: bankAccount,
+        account_type: accountType.toLowerCase(), // Ensure lowercase for validation
+        initial_balance: parseFloat(initialBalance), // Convert balance to float
+        drivers_license: licenseNumber,
+        work_eligibility: eligibility,
+        car_insurance: insuranceNumber,
+        sin,
+      };
+
+      // Make a POST request to the backend
+      const response = await axios.post('http://192.168.86.76:5000/auth/signup', payload);
+
+      // Handle success response
       Alert.alert('Success', 'Account created successfully!');
-      router.push("/sign-in")
+      router.push('/sign-in');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'An error occurred during sign-up.');
+      // Handle error response
+      const errorMessage = error.response?.data?.error || 'An error occurred during sign-up.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -79,14 +101,6 @@ export default function DriverSignUpScreen() {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-        />
-
-        <Text style={styles.label}>User Type *</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Driver or Passenger"
-          value={userType}
-          onChangeText={setUserType}
         />
 
         <Text style={styles.label}>Phone Number *</Text>

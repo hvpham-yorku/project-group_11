@@ -3,6 +3,7 @@ import { StyleSheet, Text, TextInput, View, TouchableOpacity, ScrollView, Alert 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signUp } from '@/lib/auth'; // Import the Firebase sign-up function
 import { router } from 'expo-router';
+import axios from 'axios'
 
 export default function PassengerSignUpScreen() {
   const [name, setName] = useState('');
@@ -14,20 +15,33 @@ export default function PassengerSignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
-    console.log("Sign-Up button pressed");
-
     if (!name || !phoneNumber || !address || !email || !creditCard || !password) {
       Alert.alert('Error', 'Please fill out all required fields.');
       return;
     }
 
+    const requestBody = {
+      email,
+      password,
+      name,
+      user_type: 'passenger',
+      phone_number: phoneNumber,
+      account_number: creditCard, // Assuming credit card maps to `account_number`
+      account_type: 'savings', // Example: Default to savings for passengers
+      initial_balance: 500.00, // Example: Default balance for passenger signup
+    };
+
     try {
       setLoading(true);
-      await signUp(email, password); // Call the Firebase sign-up function
-      Alert.alert('Success', 'Account created successfully!');
-      router.push("/sign-in")
+      const response = await axios.post('http://192.168.86.76:5000/auth/signup', requestBody);
+
+      if (response.status === 201) {
+        Alert.alert('Success', 'Account created successfully!');
+        router.push('/sign-in');
+      }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'An error occurred during sign-up.');
+      const errorMessage = error.response?.data?.error || 'An error occurred during sign-up.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
