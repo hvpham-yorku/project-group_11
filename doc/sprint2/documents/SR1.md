@@ -1,5 +1,6 @@
 ### Meeting Participants
-Ahmad, Ryan, Hassan, AbdulBasit, and Allen.
+Ahmad, Ryan, Hassan, AbdulBasit, and Allen. 
+Meeting took place on discord on November 26th, 2024 at 6:30pm. All members were present.
 
 ### Task
 
