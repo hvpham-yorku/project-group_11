@@ -1,87 +1,90 @@
 import ToggleSwitch from '@/components/ToggleSwitch';
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { Button } from 'react-native-elements';
 
 const SetAvailability: React.FC = () => {
-const [isOnline, setIsOnline] = useState<boolean>(false);
-const [loading, setLoading] = useState<boolean>(true);
+    const [isOnline, setIsOnline] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(true);
 
-useEffect(() => {
-fetchAvailabilityStatus(1);
+    const backendUrl = "http://192.168.86.76:5000"; // Backend URL
 
-}, []);
+    useEffect(() => {
+        fetchAvailabilityStatus(1); // Replace with dynamic driver ID if applicable
+    }, []);
 
-const fetchAvailabilityStatus = async (driverId: number) => {
-try {
-// Simulate API call delay
-setTimeout(() => {
-// Sample status data
-const sampleStatus = true; 
-setIsOnline(sampleStatus);
-setLoading(false);
-}, 1000);
-} catch (error) {
-Alert.alert('Error', 'Failed to fetch availability status.');
-setLoading(false);
-}
-};
+    const fetchAvailabilityStatus = async (driverId: number) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${backendUrl}/set-availability/${driverId}`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch availability status.");
+            }
+            const data = await response.json();
+            setIsOnline(data.availability); // Assuming the backend returns "availability"
+            setLoading(false);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to fetch availability status.');
+            setLoading(false);
+        }
+    };
 
-const toggleSwitch = async () => {
+    const toggleSwitch = async () => {
+        try {
+            setLoading(true);
+            const newStatus = !isOnline;
+            const response = await fetch(`${backendUrl}/set-availability/1`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    availability: newStatus ? "online" : "offline",
+                }),
+            });
 
+            if (!response.ok) {
+                throw new Error("Failed to update availability status.");
+            }
 
-try {
-setLoading(true);
-// Simulate API call to update status
-setTimeout(() => {
-// Update the status locally. Replace with actual API call.
-const newStatus = !isOnline;
-setIsOnline(newStatus);
-setLoading(false);
-Alert.alert('Success', `You are now ${newStatus ? 'Online' : 'Offline'}.`);
-}, 10);
-} catch (error) {
-Alert.alert('Error', 'Failed to update availability status.');
-setLoading(false);
-}
-};
+            const data = await response.json();
+            setIsOnline(newStatus);
+            setLoading(false);
+            Alert.alert('Success', data.message);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update availability status.');
+            setLoading(false);
+        }
+    };
 
-return (
-<View style={styles.container}>
-<Text style={styles.title}>Set Availability</Text>
-{loading ? (
-<ActivityIndicator size="large" color="#0000ff" />
-) : (
-<ToggleSwitch
-label="Driver Status"
-value={isOnline}
-onValueChange={toggleSwitch}
-/>
-)}
-
-</View>
-);
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Set Availability</Text>
+            {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+            ) : (
+                <ToggleSwitch
+                    label="Driver Status"
+                    value={isOnline}
+                    onValueChange={toggleSwitch}
+                />
+            )}
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
-container: {
-flex: 1,
-padding: 20,
-backgroundColor: '#ffffff',
-justifyContent: 'center',
-},
-title: {
-fontSize: 24,
-fontWeight: 'bold',
-textAlign: 'center',
-marginBottom: 40,
-},
-button: {
-backgroundColor: '#2089dc',
-},
-buttonContainer: {
-marginTop: 20,
-},
+    container: {
+        flex: 1,
+        padding: 20,
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 40,
+    },
 });
 
 export default SetAvailability;
