@@ -67,7 +67,7 @@ The RideEase application relies on the following dependencies and assumptions fo
 - **Network Configuration:** The system requires stable internet connectivity to communicate with cloud services and APIs.
 - **Third-party APIs:**
   - Google Maps API for location and routing services.
-  - Stripe API for payment processing.
+  - Firebase API for user authentication.
 - **Error Handling Assumptions:**
   - Valid user input is expected; invalid input will prompt error messages.
   - System will retry failed network requests up to 3 times before notifying the user.
@@ -89,7 +89,7 @@ The system uses a three-tier architecture:
 
 ### Architectural Diagram:
 - [Frontend] --[HTTPS]--> [Backend API Server] --[SQL Queries]--> [Database]
-- Backend also integrates with third-party services like Google Maps and Stripe.
+- Backend also integrates with third-party services like Google Maps and Firebase.
 
 ## **Error and Exception Handling Strategy**
 
