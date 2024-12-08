@@ -19,7 +19,7 @@ const BookRide = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post("http://127.0.0.1:5000/ride/create-request", {
+      const response = await axios.post("http://192.168.86.76:5000/ride/create-request", {
         passenger_id: user?.uid, // Ensure this matches your backend field
         pickup_location: userAddress,
         destination: destinationAddress,
