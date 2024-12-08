@@ -1,45 +1,134 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
+import { ImageSourcePropType } from 'react-native';
+import { View, Image } from 'react-native';
+import { icons } from '@/constants';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+const TabIcon = ({source, focused }
+  :{source:ImageSourcePropType, focused: boolean}) => (
+    <View
+    style={{
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}
+  >
+    <View
+      style={{
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+    <Image
+      source={source}
+      style={{
+        width: 35,
+        height: 35,
+        tintColor: focused ? '#66BB6A' : 'white', // Change color dynamically
+      }}
+      resizeMode="contain"
+    />
+    </View>
+  </View>
+)
+const Layout = () => (
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
-  return (
     <Tabs
+    initialRouteName="home"
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarActiveTintColor: "white",
+        tabBarInactiveTintColor: "white",
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: "#333344",
+          borderRadius: 50,
+          paddingBottom: 20,
+          marginHorizontal: 20,
+          marginBottom: 25,
+          height: 75,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems:"center",
+          flexDirection:"row",
+          position:"absolute"
+        }
+        // headerShown: false,
+        // tabBarButton: HapticTab,
+        // tabBarBackground: TabBarBackground,
+        // tabBarStyle: Platform.select({
+        //   ios: {
+        //     // Use a transparent background on iOS to show the blur effect
+        //     position: 'absolute',
+        //   },
+        //   default: {},
+        // }),
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.home} />
+          )
         }}
       />
-      <Tabs.Screen
-        name="explore"
+
+{/* <Tabs.Screen
+        name="rides"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Rides',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.list} />
+          )
+        }}
+      /> */}
+
+{/* <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.chat} />
+          )
+        }}
+      /> */}
+
+<Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.profile} />
+          )
         }}
       />
+
+      <Tabs.Screen
+        name="passenger-profile"
+        options={{
+          title: 'Profile',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.profile} />
+          )
+        }}
+      />
+
+<Tabs.Screen
+        name="view-requests"
+        options={{
+          title: 'View Requests',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} source={icons.selectedMarker} />
+          )
+        }}
+      />
+      
     </Tabs>
   );
-}
+
+export default Layout

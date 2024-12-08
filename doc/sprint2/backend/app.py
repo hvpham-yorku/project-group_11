@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from dotenv import load_dotenv
+from flask_cors import CORS  # Import CORS
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from backend.db.database_setup import db
@@ -16,6 +17,9 @@ load_dotenv()
 
 # Initialize the Flask app
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})  # Replace '*' with specific origins if needed
 
 # Initialize Firebase
 initialize_firebase()
@@ -38,6 +42,21 @@ app.register_blueprint(feedback_bp, url_prefix="/feedback")  # Routes for feedba
 @app.route("/")
 def health_check():
     return {"message": "RideEase backend is running!"}, 200
+
+# Add a route to list all registered routes
+@app.route("/routes")
+def list_routes():
+    from flask import jsonify
+
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            "endpoint": rule.endpoint,
+            "methods": list(rule.methods),
+            "url": str(rule)
+        })
+
+    return jsonify(routes)
 
 # Run the app
 if __name__ == "__main__":
