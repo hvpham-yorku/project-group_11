@@ -1,97 +1,93 @@
-**[Standup Date: 2024-11-26] - Sprint 2 Standup 1**
+**[Standup Date: 2024-12-04] - Sprint 2 Standup 6**
 
 1. **What did you work on since the last standup?**
-   - Completed user registration flow testing for passengers (User Story 1).
-   - Finished API integration for driver account creation and deployed it to the staging environment (User Story 2).
+   - Continued monitoring ride booking feature in staging and addressed minor inconsistencies in data reporting (User Story 7).
+   - Incorporated user feedback into the notification system and updated message triggers (User Story 15).
 
 2. **What do you commit to next?**
-   - Begin implementation of the GPS tracking feature for passengers to view live driver locations (User Story 7).
-   - Work on the notification system to inform passengers of driver delays (User Story 15).
+   - Optimize ride booking performance and prepare for final deployment.
+   - Conduct a final round of user testing for the notification system.
 
 3. **When do you think you'll be done?**
-   - GPS tracking feature: Initial functionality expected within three days.
-   - Notification system: Prototype ready by the next standup.
+   - Ride booking optimization: Completed by tomorrow.
+   - Notification system testing: Completed within two days.
 
 4. **Do you have any blockers?**
-   - Awaiting access to live GPS API for testing tracking features.
-   - Need input from the product team on notification phrasing and triggers.
+   - Awaiting additional performance metrics from the monitoring system.
 
 ---
 
-**[Standup Date: 2024-11-27] - Sprint 2 Standup 2**
+**[Standup Date: 2024-12-05] - Sprint 2 Standup 7**
 
 1. **What did you work on since the last standup?**
-   - Started development on the GPS tracking feature, including integration of live location data (User Story 7).
-   - Designed the framework for the notification system and set up initial backend support (User Story 15).
+   - Optimized ride booking performance and reduced latency issues (User Story 7).
+   - Completed the final round of user testing for the notification system (User Story 15).
 
 2. **What do you commit to next?**
-   - Finalize the GPS tracking UI and complete end-to-end testing.
-   - Implement delay notification triggers and ensure messages are sent under appropriate conditions.
+   - Deploy the ride booking feature to production.
+   - Prepare a summary report on the notification system’s implementation and testing results.
 
 3. **When do you think you'll be done?**
-   - GPS tracking feature: End-to-end testing completed by tomorrow.
-   - Notification system: Initial testing completed by the end of this week.
+   - Ride booking deployment: By end of day.
+   - Notification system report: Completed by tomorrow.
 
 4. **Do you have any blockers?**
-   - Facing delays in GPS data consistency during testing.
-   - Waiting for the design team to provide finalized UI assets for GPS tracking and notifications.
+   - Awaiting QA confirmation on ride booking readiness for production deployment.
 
 ---
 
-**[Standup Date: 2024-11-28] - Sprint 2 Standup 3**
+**[Standup Date: 2024-12-06] - Sprint 2 Standup 8**
 
 1. **What did you work on since the last standup?**
-   - Finalized GPS tracking feature implementation and initiated testing (User Story 7).
-   - Developed basic delay notification triggers and conducted initial tests (User Story 15).
+   - Deployed ride booking feature to production and initiated post-deployment monitoring (User Story 7).
+   - Finalized and submitted the notification system report to stakeholders (User Story 15).
 
 2. **What do you commit to next?**
-   - Conduct detailed testing on GPS tracking for accuracy and reliability.
-   - Complete user interface adjustments for the notification system.
+   - Address any issues arising from ride booking production deployment.
+   - Begin planning for the implementation of the ride-matching algorithm (User Story 10).
 
 3. **When do you think you'll be done?**
-   - GPS tracking testing: Completed by tomorrow.
-   - Notification system: Ready for review within two days.
+   - Ride booking issue resolution: As issues arise, ongoing monitoring.
+   - Ride-matching algorithm planning: Initial draft ready by next standup.
 
 4. **Do you have any blockers?**
-   - Encountering intermittent issues with GPS API data updates.
-   - Delays in receiving finalized design assets for the notification system.
+   - None currently.
 
 ---
 
-**[Standup Date: 2024-11-29] - Sprint 2 Standup 4**
+**[Standup Date: 2024-12-07] - Sprint 2 Standup 9**
 
 1. **What did you work on since the last standup?**
-   - Conducted testing on GPS tracking; resolved issues with data consistency (User Story 7).
-   - Implemented revised UI for the notification system and conducted initial reviews (User Story 15).
+   - Monitored ride booking performance in production; no major issues reported (User Story 7).
+   - Drafted an initial plan for the ride-matching algorithm, including proposed data structures and workflow (User Story 10).
 
 2. **What do you commit to next?**
-   - Finalize and deploy GPS tracking feature to staging.
-   - Complete testing and refinement for the notification system.
+   - Finalize the ride-matching algorithm design and review with the team.
+   - Investigate and resolve minor notification delivery delays reported by users.
 
 3. **When do you think you'll be done?**
-   - GPS tracking feature: Deployment by end of day.
-   - Notification system: Testing finalized by tomorrow.
+   - Ride-matching design review: Completed by tomorrow.
+   - Notification issue resolution: Completed within two days.
 
 4. **Do you have any blockers?**
-   - Awaiting final approval from QA on GPS tracking test results.
-   - Need confirmation from the design team on minor UI tweaks for the notification system.
+   - Need input from the engineering team on the scalability of the proposed ride-matching algorithm.
 
 ---
 
-**[Standup Date: 2024-12-03] - Sprint 2 Standup 5**
+**[Standup Date: 2024-12-08] - Sprint 2 Standup 10**
 
 1. **What did you work on since the last standup?**
-   - Deployed GPS tracking feature to staging and began monitoring (User Story 7).
-   - Conducted additional user testing for the notification system (User Story 15).
+   - Reviewed and refined the ride-matching algorithm design with the team (User Story 10).
+   - Investigated notification delays and identified root causes related to server load balancing (User Story 15).
 
 2. **What do you commit to next?**
-   - Monitor GPS tracking feature for any production issues.
-   - Implement feedback from user testing into the notification system.
+   - Begin implementation of the ride-matching algorithm and set up test cases.
+   - Optimize server configurations to address notification delays.
 
 3. **When do you think you'll be done?**
-   - Monitoring phase: Ongoing through the week.
-   - Notification system updates: Completed within two days.
+   - Ride-matching implementation: Initial prototype ready within three days.
+   - Notification optimization: Completed by tomorrow.
 
 4. **Do you have any blockers?**
-   - None currently; awaiting results from monitoring and user feedback.
+   - Awaiting approval from the product team on ride-matching priorities and use cases.
 
