@@ -1,3 +1,73 @@
+**[Standup Date: 2024-11-26] - Sprint 2 Standup 1**
+1. **What did you work on since the last standup?**
+   - Completed user registration flow testing for passengers (User Story 1).
+   - Finished API integration for driver account creation and deployed it to the staging environment (User Story 2).
+2. **What do you commit to next?**
+   - Begin implementation of the GPS tracking feature for passengers to view live driver locations (User Story 7).
+   - Work on the notification system to inform passengers of driver delays (User Story 15).
+3. **When do you think you'll be done?**
+   - GPS tracking feature: Initial functionality expected within three days.
+   - Notification system: Prototype ready by the next standup.
+4. **Do you have any blockers?**
+   - Awaiting access to live GPS API for testing tracking features.
+   - Need input from the product team on notification phrasing and triggers.
+---
+**[Standup Date: 2024-11-27] - Sprint 2 Standup 2**
+1. **What did you work on since the last standup?**
+   - Started development on the GPS tracking feature, including integration of live location data (User Story 7).
+   - Designed the framework for the notification system and set up initial backend support (User Story 15).
+2. **What do you commit to next?**
+   - Finalize the GPS tracking UI and complete end-to-end testing.
+   - Implement delay notification triggers and ensure messages are sent under appropriate conditions.
+3. **When do you think you'll be done?**
+   - GPS tracking feature: End-to-end testing completed by tomorrow.
+   - Notification system: Initial testing completed by the end of this week.
+4. **Do you have any blockers?**
+   - Facing delays in GPS data consistency during testing.
+   - Waiting for the design team to provide finalized UI assets for GPS tracking and notifications.
+---
+**[Standup Date: 2024-11-28] - Sprint 2 Standup 3**
+1. **What did you work on since the last standup?**
+   - Finalized GPS tracking feature implementation and initiated testing (User Story 7).
+   - Developed basic delay notification triggers and conducted initial tests (User Story 15).
+2. **What do you commit to next?**
+   - Conduct detailed testing on GPS tracking for accuracy and reliability.
+   - Complete user interface adjustments for the notification system.
+3. **When do you think you'll be done?**
+   - GPS tracking testing: Completed by tomorrow.
+   - Notification system: Ready for review within two days.
+4. **Do you have any blockers?**
+   - Encountering intermittent issues with GPS API data updates.
+   - Delays in receiving finalized design assets for the notification system.
+---
+**[Standup Date: 2024-11-29] - Sprint 2 Standup 4**
+1. **What did you work on since the last standup?**
+   - Conducted testing on GPS tracking; resolved issues with data consistency (User Story 7).
+   - Implemented revised UI for the notification system and conducted initial reviews (User Story 15).
+2. **What do you commit to next?**
+   - Finalize and deploy GPS tracking feature to staging.
+   - Complete testing and refinement for the notification system.
+3. **When do you think you'll be done?**
+   - GPS tracking feature: Deployment by end of day.
+   - Notification system: Testing finalized by tomorrow.
+4. **Do you have any blockers?**
+   - Awaiting final approval from QA on GPS tracking test results.
+   - Need confirmation from the design team on minor UI tweaks for the notification system.
+---
+**[Standup Date: 2024-12-03] - Sprint 2 Standup 5**
+1. **What did you work on since the last standup?**
+   - Deployed GPS tracking feature to staging and began monitoring (User Story 7).
+   - Conducted additional user testing for the notification system (User Story 15).
+2. **What do you commit to next?**
+   - Monitor GPS tracking feature for any production issues.
+   - Implement feedback from user testing into the notification system.
+3. **When do you think you'll be done?**
+   - Monitoring phase: Ongoing through the week.
+   - Notification system updates: Completed within two days.
+4. **Do you have any blockers?**
+   - None currently; awaiting results from monitoring and user feedback.
+
+
 **[Standup Date: 2024-12-04] - Sprint 2 Standup 6**
 
 1. **What did you work on since the last standup?**
