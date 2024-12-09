@@ -1,4 +1,4 @@
-The goal of sprint 2 is to fully commit to 17 user stories that combine the essential features of the project together. As mentioned in sprint0, this is a three-tier application where we would have the presentation layer, application layer, and data layer.
+The goal of sprint 2 is to fully commit to 16 user stories that combine the essential features of the project together. As mentioned in sprint0, this is a three-tier application where we would have the presentation layer, application layer, and data layer.
 
 For the completion of this project, we would need the presentation tier for all user stories below (using React Native and Expo), as well as the application layer (using Flask) and data layer (using Postgreqsl).
 
@@ -8,27 +8,27 @@ For the completion of this project, we would need the presentation tier for all 
 2. Create a Sign Up page for the User. (Combination of User Study 1 and 2)
 3. Have a verification code sent on the User's email they provided to authenticate the user.
 4. Create a Sign In page for the User.
-5. Create a Home page where the user is directed to once they have signed in with their RideEase account.
+5. Create a Home page where the user is directed to once they have signed in with their RideEase account. (User Study 3)
+6. Have tabs where we can shift through pages (including a profile page) (User Study 17)
 
-**17 User Stories to work on:**
+**16 User Stories to work on (Numbers here correspond to the user studies in pb.md):**
 
 1.  As a passenger, I want to create an account and provide my information so that I can use the app’s services. (Needs to be updated in Sprint 2)
 2. As a driver, I want to create an account and provide my necessary documents so that I can use the app’s services to find passengers. (Needs to be updated in Sprint 2)
-3. As a passenger, I want to set a destination and view the estimated fare so that I know the cost of my ride before booking.
+3. As a passenger, I want to set a destination and view the estimated fare so that I know the cost of my ride before booking. (Needs to be updated in Sprint 2)
 4. As a driver, I want to view incoming ride requests with passenger information so that I can choose to accept or decline.
 5. As a passenger, I want to see the driver's estimated time of arrival once the ride is booked so that I can prepare for pickup.
-6. As a passenger, I want to be able to track the driver’s location live so that I know the progress of my ride.
-7. As a driver, I want to be able to navigate to the pickup location with the GPS provided in-app for ease of access.
-8. As an admin, I want to be able to view a dashboard showing all active rides so that I can monitor platform activity.
-9. As a passenger, I want the option to rate my driver after the ride is complete so that I can share feedback.
-10. As a driver, I want to be able to review my payments for each ride so that I can track my earnings.
-11. As a driver, I want a confirmation of payment after each completed ride to ensure I receive accurate compensation.
-12. As an admin, I want to be able to review any complaints or feedback from users to ensure quality service.
-13. As a passenger, I want to receive notifications if my driver is delayed so that I can adjust my plans.
-14. As a driver, I want to see an option to log out of the app so that I can securely end my session.
-15. As a passenger, I want to be able to edit my profile information (such as address or payment details) so that my information remains accurate.
-16. As an admin, I want to have a way to view user documents for background checks, ensuring user verification.
-17. As a driver, I want to set my availability status (online/offline) so that I only receive ride requests when I’m available.
+9. As an admin, I want to be able to view a dashboard showing all active rides so that I can monitor platform activity.
+10. As a passenger, I want the option to rate my driver after the ride is complete so that I can share feedback.
+11. As a driver, I want to be able to review my payments for each ride so that I can track my earnings.
+12. User Story: As a passenger, I want to be able to pre-authorize a payment at the start of my ride so that payment is seamless. 
+13. As a driver, I want a confirmation of payment after each completed ride to ensure I receive accurate compensation.
+14. As an admin, I want to be able to review any complaints or feedback from users to ensure quality service.
+15. As a passenger, I want to receive notifications if my driver is delayed so that I can adjust my plans.
+16. As a driver, I want to see an option to log out of the app so that I can securely end my session.
+17. As a passenger, I want to be able to edit my profile information (such as address or payment details) so that my information remains accurate. ((Needs to be updated in Sprint 2))
+18. As an admin, I want to have a way to view user documents for background checks, ensuring user verification.
+19. As a driver, I want to set my availability status (online/offline) so that I only receive ride requests when I’m available.
 
 **The team consists of 5 members:** Ahmad, Ryan, Hassan, AbdulBasit, and Allen.
 
