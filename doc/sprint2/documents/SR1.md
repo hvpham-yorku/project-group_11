@@ -12,7 +12,8 @@ In summary, the goal of sprint 1 was to implement the following features:
 2. Create a Sign Up page for the User. (Combination of User Study 1 and 2)
 3. Have a verification code sent on the User's email they provided to authenticate the user.
 4. Create a Sign In page for the User.
-5. Create a Home page where the user is directed to once they have signed in with their RideEase account.
+5. Create a Home page where the user is directed to once they have signed in with their RideEase account. (User Study 3)
+6. Have tabs where we can shift through pages (including a profile page) (User Study 17)
    
 ### Tasks to work on in Sprint 2
 The above features were successfully implemented with sprint 1, therefore in our planning we moved on to adding the following user stories for sprint 2. Since in sprint 1, we wanted to test out the functionalities, we will later update the user stories 1 & 2 in sprint 2.
